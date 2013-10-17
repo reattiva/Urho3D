@@ -3,6 +3,8 @@ uniform vec3 cAmbientEndColor;
 uniform mat3 cBillboardRot;
 uniform vec3 cCameraPos;
 uniform mat3 cCameraRot;
+uniform float cNearClip;
+uniform float cFarClip;
 uniform vec4 cDepthMode;
 uniform vec3 cFrustumSize;
 uniform float cElapsedTime;

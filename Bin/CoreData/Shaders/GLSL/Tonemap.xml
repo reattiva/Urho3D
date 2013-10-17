@@ -1,0 +1,7 @@
+<shaders>
+    <shader type="vs" />
+    <shader type="ps">
+    	<variation name="Reinhard" define="REINHARD" />
+        <variation name="Filmic" define="FILMIC" />
+    </shader>
+</shaders>

@@ -201,6 +201,8 @@ extern StringHash VSP_AMBIENTENDCOLOR;
 extern StringHash VSP_BILLBOARDROT;
 extern StringHash VSP_CAMERAPOS;
 extern StringHash VSP_CAMERAROT;
+extern StringHash VSP_NEARCLIP;
+extern StringHash VSP_FARCLIP;
 extern StringHash VSP_DEPTHMODE;
 extern StringHash VSP_ELAPSEDTIME;
 extern StringHash VSP_FRUSTUMSIZE;

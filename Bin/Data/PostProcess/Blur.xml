@@ -1,0 +1,28 @@
+<renderpath>
+    <rendertarget name="blur" tag="Blur" sizedivisor="2 2" format="rgb" filter="true" />
+    <rendertarget name="blur2" tag="Blur" sizedivisor="2 2" format="rgb" filter="true" />
+    <command type="quad" tag="Blur" vs="Blur" ps="Blur_Blur5" output="blur">
+		<parameter name="BlurSigma" value="2.0" />
+		<parameter name="BlurScale" value="2.0" />
+		<parameter name="BlurDir" value="1.0 0.0" />
+        <texture unit="diffuse" name="viewport" />
+    </command>
+    <command type="quad" tag="Blur" vs="Blur" ps="Blur_Blur5" output="blur2">
+    	<parameter name="BlurSigma" value="2.0" />
+		<parameter name="BlurScale" value="2.0" />
+		<parameter name="BlurDir" value="0.0 1.0" />
+        <texture unit="diffuse" name="blur" />
+    </command>
+    <command type="quad" tag="Blur" vs="Blur" ps="Blur_Blur5" output="blur">
+        <parameter name="BlurSigma" value="2.0" />
+        <parameter name="BlurScale" value="1.0" />
+        <parameter name="BlurDir" value="1.0 0.0" />
+        <texture unit="diffuse" name="blur2" />
+    </command>
+    <command type="quad" tag="Blur" vs="Blur" ps="Blur_Blur5" output="viewport">
+        <parameter name="BlurSigma" value="2.0" />
+        <parameter name="BlurScale" value="1.0" />
+        <parameter name="BlurDir" value="0.0 1.0" />
+        <texture unit="diffuse" name="blur" />
+    </command>
+</renderpath>

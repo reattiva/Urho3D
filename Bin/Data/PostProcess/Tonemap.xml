@@ -1,0 +1,11 @@
+<renderpath>
+	<command type="quad" enabled="false" tag="Reinhard" vs="Tonemap" ps="Tonemap_Reinhard" output="viewport">
+        <parameter name="TonemapExposer" value="10.0" />
+        <texture unit="diffuse" name="hdr" />
+    </command>
+    <command type="quad" enabled="true" tag="Filmic" vs="Tonemap" ps="Tonemap_Filmic" output="viewport">
+        <parameter name="TonemapExposer" value="16.0" />
+        <parameter name="TonemapWhiteCutoff" value="11.0" />
+        <texture unit="diffuse" name="hdr" />
+    </command>
+</renderpath>

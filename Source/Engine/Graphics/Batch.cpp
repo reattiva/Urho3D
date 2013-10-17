@@ -218,6 +218,10 @@ void Batch::Prepare(View* view, bool setModelTransform) const
         
         graphics->SetShaderParameter(VSP_CAMERAPOS, cameraNode->GetWorldPosition());
         graphics->SetShaderParameter(VSP_CAMERAROT, cameraWorldRotation);
+
+        graphics->SetShaderParameter(VSP_NEARCLIP, camera_->GetNearClip());
+        graphics->SetShaderParameter(VSP_FARCLIP, camera_->GetFarClip());
+
         Vector4 depthMode = Vector4::ZERO;
         if (camera_->IsOrthographic())
         {

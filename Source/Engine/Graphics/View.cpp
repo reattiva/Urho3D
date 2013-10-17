@@ -1513,6 +1513,9 @@ void View::RenderQuad(RenderPathCommand& command)
     const HashMap<StringHash, Variant>& parameters = command.shaderParameters_;
     for (HashMap<StringHash, Variant>::ConstIterator k = parameters.Begin(); k != parameters.End(); ++k)
         graphics_->SetShaderParameter(k->first_, k->second_);
+
+    graphics_->SetShaderParameter(VSP_NEARCLIP, camera_->GetNearClip());
+    graphics_->SetShaderParameter(VSP_FARCLIP, camera_->GetFarClip());
     
     float rtWidth = (float)rtSize_.x_;
     float rtHeight = (float)rtSize_.y_;
