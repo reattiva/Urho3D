@@ -34,6 +34,7 @@
 #include "GraphicsEvents.h"
 #include "GraphicsImpl.h"
 #include "IndexBuffer.h"
+#include "ImageSet.h"
 #include "Log.h"
 #include "Material.h"
 #include "Mutex.h"
@@ -46,6 +47,7 @@
 #include "ShaderProgram.h"
 #include "ShaderVariation.h"
 #include "Skybox.h"
+#include "Sprite2D.h"
 #include "StaticModelGroup.h"
 #include "StringUtils.h"
 #include "Technique.h"
@@ -2736,10 +2738,12 @@ void RegisterGraphicsLibrary(Context* context)
     TextureCube::RegisterObject(context);
     Camera::RegisterObject(context);
     Drawable::RegisterObject(context);
+    ImageSet::RegisterObject(context);
     Light::RegisterObject(context);
     StaticModel::RegisterObject(context);
     StaticModelGroup::RegisterObject(context);
     Skybox::RegisterObject(context);
+    Sprite2D::RegisterObject(context);
     AnimatedModel::RegisterObject(context);
     AnimationController::RegisterObject(context);
     BillboardSet::RegisterObject(context);
