@@ -43,7 +43,9 @@ extern const char* blendModeNames[];
 static const unsigned SPRITE2D_NUMBER_VERTICES = 6;
 
 Sprite2D::Sprite2D(Context* context) : Drawable(context, DRAWABLE_GEOMETRY),
-    hotSpot_(0.5f, 0.5f),
+    flipX_(false),
+    flipY_(false),
+    hotSpot_(0.5f, 0.5f),    
     color_(Color::WHITE),
     textureRect_(0, 0, 0, 0),
     useWholeTexture_(true),
@@ -62,7 +64,9 @@ void Sprite2D::RegisterObject(Context* context)
 {
     context->RegisterFactory<Sprite2D>(GEOMETRY_CATEGORY);
 
-    REF_ACCESSOR_ATTRIBUTE(Sprite2D, VAR_VECTOR2, "Hot Spot", GetHotSpot, SetHotSpot, Vector2, Vector2(0.5f, 0.5f), AM_FILE);
+    ACCESSOR_ATTRIBUTE(Sprite2D, VAR_BOOL, "Flip X", GetFlipX, SetFilpX, bool, false, AM_DEFAULT);
+    ACCESSOR_ATTRIBUTE(Sprite2D, VAR_BOOL, "Flip Y", GetFlipY, SetFlipY, bool, false, AM_DEFAULT);
+    REF_ACCESSOR_ATTRIBUTE(Sprite2D, VAR_VECTOR2, "Hot Spot", GetHotSpot, SetHotSpot, Vector2, Vector2(0.5f, 0.5f), AM_FILE);    
     REF_ACCESSOR_ATTRIBUTE(Sprite2D, VAR_COLOR, "Color", GetColor, SetColor, Color, Color::WHITE, AM_DEFAULT);
     ACCESSOR_ATTRIBUTE(Sprite2D, VAR_RESOURCEREF, "Texture", GetTextureAttr, SetTextureAttr, ResourceRef, ResourceRef(Texture::GetTypeStatic()), AM_FILE);
     ACCESSOR_ATTRIBUTE(Sprite2D, VAR_RESOURCEREF, "Imageset", GetImagesetAttr, SetImagesetAttr, ResourceRef, ResourceRef(ImageSet::GetTypeStatic()), AM_DEFAULT);
@@ -121,6 +125,30 @@ UpdateGeometryType Sprite2D::GetUpdateGeometryType()
         return UPDATE_MAIN_THREAD;
     else
         return UPDATE_NONE;
+}
+
+void Sprite2D::SetFilpX(bool flipX)
+{
+    if (flipX_ != flipX)
+    {
+        flipX_ = flipX;
+
+        MarkSpriteDirty();
+        UpdateSpriteBatches();
+        UpdateSpriteMaterials();
+    }
+}
+
+void Sprite2D::SetFlipY(bool flipY)
+{
+    if (flipY_ != flipY)
+    {
+        flipY_ = flipY;
+
+        MarkSpriteDirty();
+        UpdateSpriteBatches();
+        UpdateSpriteMaterials();
+    }
 }
 
 void Sprite2D::SetHotSpot(const Vector2& hotSpot)
@@ -337,8 +365,10 @@ void Sprite2D::UpdateSpriteBatches()
         height = (float)textureRect_.Height();
     }
 
-    float leftX = -width * hotSpot_.x_;
-    float bottomY = -height * hotSpot_.y_;
+    float hotSpotX = flipX_ ? (1.0f - hotSpot_.x_) : hotSpot_.x_;
+    float hotSpotY = flipY_ ? (1.0f - hotSpot_.y_) : hotSpot_.y_;
+    float leftX = -width * hotSpotX;
+    float bottomY = -height * hotSpotY;
     vertex0.position_ = Vector3(leftX, bottomY, 0.0f);
     vertex1.position_ = Vector3(leftX, bottomY + height, 0.0f);
     vertex2.position_ = Vector3(leftX + width, bottomY + height, 0.0f);
@@ -362,7 +392,11 @@ void Sprite2D::UpdateSpriteBatches()
         bottomV = textureRect_.bottom_ * invTexH;
         topV = textureRect_.top_ * invTexH;
     }
-    
+
+    if (flipX_)
+        Swap(leftU, rightU);    
+    if (flipY_)
+        Swap(bottomV, topV);
     vertex0.uv_ = Vector2(leftU, bottomV);
     vertex1.uv_ = Vector2(leftU, topV);
     vertex2.uv_ = Vector2(rightU, topV);
@@ -431,4 +465,5 @@ void Sprite2D::UpdateSpriteMaterials(bool forceUpdate)
         material->SetTexture(TU_DIFFUSE, texture_);
     }
 }
+
 }
