@@ -28,29 +28,41 @@ namespace Urho3D
 {
 
 class Texture;
+class XMLElement;
 
-/// %Imageset resource.
-class URHO3D_API ImageSet : public Resource
+/// %Sprite sheet resource.
+class URHO3D_API SpriteSheet : public Resource
 {
-    OBJECT(ImageSet);
+    OBJECT(SpriteSheet);
     
 public:
     /// Construct empty.
-    ImageSet(Context* context);
+    SpriteSheet(Context* context);
     /// Destruct.
-    virtual ~ImageSet();
+    virtual ~SpriteSheet();
     /// Register object factory.
     static void RegisterObject(Context* context);
     
     /// Load resource. Return true if successful.
     virtual bool Load(Deserializer& source);
+    /// Save to an XML file. Return true if successful.
+    bool SaveXML(Serializer& dest) const;
 
+    /// Return texture file name.
+    const String& GetTextureFileName() const { return textureFileName_; }
     /// Return texture.
     Texture* GetTexture() const { return texture_; }
     /// Return texture rectangle.
     const IntRect& GetTextureRect(const String& name) const;
 
 private:
+    /// Load sprite sheet file.
+    bool LoadSpriteSheet(XMLElement& rootElem);
+    /// Load OGRE/CEGUI image set file.
+    bool LoadImageSet(XMLElement& rootElem);
+
+    /// Texture file name.
+    String textureFileName_;
     /// Texture.
     SharedPtr<Texture> texture_;
     /// Name to texture rect mapping.
