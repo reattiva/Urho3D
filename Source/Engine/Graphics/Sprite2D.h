@@ -29,7 +29,7 @@
 namespace Urho3D
 {
 
-class ImageSet;
+class SpriteSheet;
 
 /// Vertex2D.
 struct Vertex2D
@@ -80,12 +80,12 @@ public:
     void SetTextureRect(const IntRect& rect);
     /// Set use whole texture.
     void SetUseWholeTexture(bool useWholeTexture);
-    /// Set image set.
-    void SetImageSet(ImageSet* imageSet);
-    /// Set image name.
-    void SetImageName(const String& imageName);
-    /// Set image from image set and image name.
-    bool SetImage(ImageSet* imageSet, const String& imageName);
+    /// Set sprite sheet.
+    void SetSpriteSheet(SpriteSheet* spriteSheet);
+    /// Set sprite name.
+    void SetSpriteName(const String& spriteName);
+    /// Set sprite from sprite sheet and sprite name.
+    bool SetSprite(SpriteSheet* spriteSheet, const String& spriteName);
     /// Set material.
     void SetMaterial(Material* material);
     /// Set blend mode.
@@ -106,9 +106,9 @@ public:
     /// Return use whole texture.
     bool IsUseWholeTexture() const { return useWholeTexture_; }
     /// Return image set.
-    ImageSet* GetImageset() const;
+    SpriteSheet* GetSpriteSheet() const;
     /// Return image name.
-    const String& GetImageName() const { return imageName_; }
+    const String& GetSpriteName() const { return spriteName_; }
     /// Return material.
     Material* GetMaterial() const;
     /// Return blend mode.
@@ -119,9 +119,9 @@ public:
     /// Return texture attribute.
     ResourceRef GetTextureAttr() const;
     /// Set image set attribute.
-    void SetImagesetAttr(ResourceRef value);
+    void SetSpriteSheetAttr(ResourceRef value);
     /// Return image set attribute.
-    ResourceRef GetImagesetAttr() const;
+    ResourceRef GetSpriteSheetAttr() const;
     /// Set material attribute.
     void SetMaterialAttr(ResourceRef value);
     /// Return material attribute.
@@ -155,10 +155,10 @@ private:
     IntRect textureRect_;
     /// Use whole texture.
     bool useWholeTexture_;
-    /// Image set.
-    SharedPtr<ImageSet> imageSet_;
-    /// Image name.
-    String imageName_;
+    /// Sprite sheet.
+    SharedPtr<SpriteSheet> spriteSheet_;
+    /// Sprite name.
+    String spriteName_;
     /// Material.
     SharedPtr<Material> material_;
     /// Blend mode.

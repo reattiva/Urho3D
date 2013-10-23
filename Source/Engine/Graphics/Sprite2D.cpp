@@ -24,11 +24,11 @@
 #include "Camera.h"
 #include "Context.h"
 #include "Geometry.h"
-#include "ImageSet.h"
 #include "Material.h"
 #include "Node.h"
 #include "ResourceCache.h"
 #include "Sprite2D.h"
+#include "SpriteSheet.h"
 #include "Technique.h"
 #include "Texture.h"
 #include "VertexBuffer.h"
@@ -69,8 +69,8 @@ void Sprite2D::RegisterObject(Context* context)
     REF_ACCESSOR_ATTRIBUTE(Sprite2D, VAR_VECTOR2, "Hot Spot", GetHotSpot, SetHotSpot, Vector2, Vector2(0.5f, 0.5f), AM_FILE);    
     REF_ACCESSOR_ATTRIBUTE(Sprite2D, VAR_COLOR, "Color", GetColor, SetColor, Color, Color::WHITE, AM_DEFAULT);
     ACCESSOR_ATTRIBUTE(Sprite2D, VAR_RESOURCEREF, "Texture", GetTextureAttr, SetTextureAttr, ResourceRef, ResourceRef(Texture::GetTypeStatic()), AM_FILE);
-    ACCESSOR_ATTRIBUTE(Sprite2D, VAR_RESOURCEREF, "Imageset", GetImagesetAttr, SetImagesetAttr, ResourceRef, ResourceRef(ImageSet::GetTypeStatic()), AM_DEFAULT);
-    REF_ACCESSOR_ATTRIBUTE(Sprite2D, VAR_STRING, "Image Name", GetImageName, SetImageName, String, String::EMPTY, AM_FILE);
+    ACCESSOR_ATTRIBUTE(Sprite2D, VAR_RESOURCEREF, "Sprite Sheet", GetSpriteSheetAttr, SetSpriteSheetAttr, ResourceRef, ResourceRef(SpriteSheet::GetTypeStatic()), AM_DEFAULT);
+    REF_ACCESSOR_ATTRIBUTE(Sprite2D, VAR_STRING, "Sprite Name", GetSpriteName, SetSpriteName, String, String::EMPTY, AM_FILE);
     ACCESSOR_ATTRIBUTE(Sprite2D, VAR_RESOURCEREF, "Material", GetMaterialAttr, SetMaterialAttr, ResourceRef, ResourceRef(Material::GetTypeStatic()), AM_DEFAULT);
     REF_ACCESSOR_ATTRIBUTE(Sprite2D, VAR_INTRECT, "Texture Rect", GetTextureRect, SetTextureRect, IntRect, IntRect::ZERO, AM_FILE);
     ACCESSOR_ATTRIBUTE(Sprite2D, VAR_BOOL, "Use Whole Texture", IsUseWholeTexture, SetUseWholeTexture, bool, true, AM_DEFAULT);
@@ -203,50 +203,50 @@ void Sprite2D::SetUseWholeTexture(bool useWholeTexture)
     }
 }
 
-void Sprite2D::SetImageSet(ImageSet* imageSet)
+void Sprite2D::SetSpriteSheet(SpriteSheet* spriteSheet)
 {
-    Texture* texture = imageSet->GetTexture();
+    Texture* texture = spriteSheet->GetTexture();
     if (!texture)
         return;
 
     SetTexture(texture);
-    imageSet_ = imageSet;
+    spriteSheet_ = spriteSheet;
 
-    if (imageName_.Empty())
-        SetImageName(imageName_);
+    if (spriteName_.Empty())
+        SetSpriteName(spriteName_);
 }
 
-void Sprite2D::SetImageName(const String& imageName)
+void Sprite2D::SetSpriteName(const String& spriteName)
 {
-    if (imageSet_)
+    if (spriteSheet_)
     {
-        const IntRect& textureRect = imageSet_->GetTextureRect(imageName);
+        const IntRect& textureRect = spriteSheet_->GetTextureRect(spriteName);
         if (textureRect.Width() == 0 || textureRect.Height() == 0)
             return;
         SetTextureRect(textureRect);
     }
 
-    imageName_ = imageName;
+    spriteName_ = spriteName;
 }
 
-bool Sprite2D::SetImage(ImageSet* imageSet, const String& imageName)
+bool Sprite2D::SetSprite(SpriteSheet* spriteSheet, const String& spriteName)
 {
-    if (!imageSet || imageName.Empty())
+    if (!spriteSheet || spriteName.Empty())
         return false;
 
-    Texture* texture = imageSet->GetTexture();
+    Texture* texture = spriteSheet->GetTexture();
     if (!texture)
         return false;
 
-    const IntRect& textureRect = imageSet->GetTextureRect(imageName);
+    const IntRect& textureRect = spriteSheet->GetTextureRect(spriteName);
     if (textureRect.Width() == 0 || textureRect.Height() == 0)
         return false;
 
     SetTexture(texture);
     SetTextureRect(textureRect);
 
-    imageSet_ = imageSet;
-    imageName_ = imageName;
+    spriteSheet_ = spriteSheet;
+    spriteName_ = spriteName;
 
     return true;
 }
@@ -272,9 +272,9 @@ Texture* Sprite2D::GetTexture() const
     return texture_;
 }
 
-ImageSet* Sprite2D::GetImageset() const
+SpriteSheet* Sprite2D::GetSpriteSheet() const
 {
-    return imageSet_;
+    return spriteSheet_;
 }
 
 Material* Sprite2D::GetMaterial() const
@@ -309,15 +309,15 @@ Urho3D::ResourceRef Sprite2D::GetTextureAttr() const
     return GetResourceRef(texture_, Texture::GetTypeStatic());
 }
 
-void Sprite2D::SetImagesetAttr(ResourceRef value)
+void Sprite2D::SetSpriteSheetAttr(ResourceRef value)
 {
     ResourceCache* cache = GetSubsystem<ResourceCache>();
-    SetImageSet(cache->GetResource<ImageSet>(value.id_));
+    SetSpriteSheet(cache->GetResource<SpriteSheet>(value.id_));
 }
 
-Urho3D::ResourceRef Sprite2D::GetImagesetAttr() const
+Urho3D::ResourceRef Sprite2D::GetSpriteSheetAttr() const
 {
-    return GetResourceRef(texture_, ImageSet::GetTypeStatic());
+    return GetResourceRef(texture_, SpriteSheet::GetTypeStatic());
 }
 
 void Sprite2D::SetMaterialAttr(ResourceRef value)
