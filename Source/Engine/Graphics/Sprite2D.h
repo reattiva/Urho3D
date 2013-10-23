@@ -24,7 +24,6 @@
 
 #include "Drawable.h"
 #include "GraphicsDefs.h"
-#include "Matrix3x4.h"
 #include "VertexBuffer.h"
 
 namespace Urho3D
@@ -65,6 +64,10 @@ public:
     /// Return whether a geometry update is necessary, and if it can happen in a worker thread.
     virtual UpdateGeometryType GetUpdateGeometryType();
 
+    /// Set flip X.
+    void SetFilpX(bool flipX);
+    /// Set flip Y.
+    void SetFlipY(bool flipY);
     /// Set hot spot for positioning and rotation.
     void SetHotSpot(const Vector2& hotSpot);
     /// Set hot spot for positioning and rotation.
@@ -81,13 +84,17 @@ public:
     void SetImageSet(ImageSet* imageSet);
     /// Set image name.
     void SetImageName(const String& imageName);
-    /// Set image from imageset and image name.
+    /// Set image from image set and image name.
     bool SetImage(ImageSet* imageSet, const String& imageName);
     /// Set material.
     void SetMaterial(Material* material);
     /// Set blend mode.
     void SetBlendMode(BlendMode mode);
 
+    /// Return flip X.
+    bool GetFlipX() const { return flipX_; }
+    /// Return flip Y.
+    bool GetFlipY() const { return flipY_; }
     /// Return hot spot for positioning and rotation.
     const Vector2& GetHotSpot() const { return hotSpot_; }
     /// Return color.
@@ -134,6 +141,10 @@ private:
     /// Create materials for sprite rendering.
     void UpdateSpriteMaterials(bool forceUpdate = false);
 
+    /// Flip X.
+    bool flipX_;
+    /// Flip Y.
+    bool flipY_;
     /// Hot spot.
     Vector2 hotSpot_;
     /// Color.
