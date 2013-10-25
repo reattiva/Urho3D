@@ -12,7 +12,7 @@ varying vec2 vScreenPos;
 
 void main()
 {
-	#ifdef BLUR5
+    #ifdef BLUR5
         gl_FragColor = GaussianBlur(5, cBlurSigma, cBlurDir, cBlurInvSize * cBlurScale, sDiffMap, vTexCoord);
     #endif
 

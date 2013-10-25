@@ -1,5 +1,5 @@
 <renderpath>
-	<rendertarget name="hdr" rtsizedivisor="1 1" format="rgba16f" />
+    <rendertarget name="hdr" rtsizedivisor="1 1" format="rgba16f" />
     <command type="clear" color="fog" depth="1.0" stencil="0" />
     <command type="quad" vs="CopyFrameBuffer" ps="CopyFrameBuffer" output="hdr">
         <texture unit="diffuse" name="viewport" />

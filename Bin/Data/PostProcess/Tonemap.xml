@@ -1,5 +1,5 @@
 <renderpath>
-	<command type="quad" enabled="false" tag="Reinhard" vs="Tonemap" ps="Tonemap_Reinhard" output="hdrcopy">
+    <command type="quad" enabled="false" tag="Reinhard" vs="Tonemap" ps="Tonemap_Reinhard" output="hdrcopy">
         <parameter name="TonemapExposer" value="10.0" />
         <texture unit="diffuse" name="hdr" />
     </command>

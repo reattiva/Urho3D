@@ -7,6 +7,6 @@ varying vec2 vScreenPos;
 
 void main()
 {
-	vec3 original = texture2D(sDiffMap, vScreenPos).rgb;
-	gl_FragColor = vec4(ColorCorrection(original, sVolumeMap), 1.0);
+    vec3 original = texture2D(sDiffMap, vScreenPos).rgb;
+    gl_FragColor = vec4(ColorCorrection(original, sVolumeMap), 1.0);
 }
