@@ -64,3 +64,11 @@ vec3 CombineColors(vec3 color1, vec3 color2, vec2 colorMix)
     rgb1 *= max(vec3(1.0) - rgb2, vec3(0.0));
     return rgb1 + rgb2;
 }
+
+vec3 ColorCorrection(vec3 color, sampler3D lut)
+{
+	float lutSize = 16.0;
+	float scale = (lutSize - 1.0) / lutSize;
+	float offset = 1.0 / (2.0 * lutSize);
+	return texture3D(lut, clamp(color, 0.0, 1.0) * scale + offset).rgb;
+}

@@ -1,5 +1,4 @@
 <renderpath>
-    <rendertarget name="hdrcopy" sizedivisor="1 1" format="rgba16f" />
     <rendertarget name="bright2" tag="BloomHDR" sizedivisor="2 2" format="rgba16f" filter="true" />
     <rendertarget name="bright4" tag="BloomHDR" sizedivisor="4 4" format="rgba16f" filter="true" />
     <rendertarget name="bright8" tag="BloomHDR" sizedivisor="8 8" format="rgba16f" filter="true" />
@@ -8,9 +7,6 @@
     <rendertarget name="blur4" tag="BloomHDR" sizedivisor="4 4" format="rgba16f" filter="true" />
     <rendertarget name="blur8" tag="BloomHDR" sizedivisor="8 8" format="rgba16f" filter="true" />
     <rendertarget name="blur16" tag="BloomHDR" sizedivisor="16 16" format="rgba16f" filter="true" />
-    <command type="quad" tag="BloomHDR" vs="CopyFrameBuffer" ps="CopyFrameBuffer" output="hdrcopy">
-        <texture unit="diffuse" name="hdr" />
-    </command>
     <command type="quad" tag="BloomHDR" vs="BloomHDR_Bright" ps="BloomHDR_Bright" output="bright2">
         <parameter name="BloomHDRThreshold" value="0.3" />
         <texture unit="diffuse" name="hdr" />
@@ -87,9 +83,12 @@
         <parameter name="BloomHDRBlurDir" value="0.0 1.0" />
         <texture unit="diffuse" name="bright2" />
     </command>
-    <command type="quad" tag="BloomHDR" vs="BloomHDR_Combine2" ps="BloomHDR_Combine2" output="hdr">
-        <parameter name="BloomHDRMix" value="1.0 0.8" />
-        <texture unit="diffuse" name="hdrcopy" />
+    <command type="quad" tag="BloomHDR" vs="BloomHDR_Combine2" ps="BloomHDR_Combine2" output="hdrcopy">
+        <parameter name="BloomHDRMix" value="1.0 0.6" />
+        <texture unit="diffuse" name="hdr" />
         <texture unit="normal" name="blur2" />
+    </command>
+    <command type="quad" tag="BloomHDR" vs="CopyFrameBuffer" ps="CopyFrameBuffer" output="hdr">
+        <texture unit="diffuse" name="hdrcopy" />
     </command>
 </renderpath>

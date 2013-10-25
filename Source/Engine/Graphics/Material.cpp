@@ -54,6 +54,7 @@ static const char* textureUnitNames[] =
     "indirection",
     "depth",
     "light",
+    "volume",
     0
 };
 

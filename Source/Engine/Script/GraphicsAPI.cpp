@@ -43,6 +43,7 @@
 #include "Terrain.h"
 #include "TerrainPatch.h"
 #include "Texture2D.h"
+#include "Texture3D.h"
 #include "TextureCube.h"
 #include "Skybox.h"
 #include "Zone.h"
@@ -167,6 +168,11 @@ static Viewport* ConstructViewportSceneCameraRect(Scene* scene, Camera* camera, 
 }
 
 static bool Texture2DLoad(Image* image, bool useAlpha, Texture2D* ptr)
+{
+    return ptr->Load(SharedPtr<Image>(image), useAlpha);
+}
+
+static bool Texture3DLoad(Image* image, bool useAlpha, Texture3D* ptr)
 {
     return ptr->Load(SharedPtr<Image>(image), useAlpha);
 }
@@ -436,6 +442,11 @@ static void RegisterTextures(asIScriptEngine* engine)
     engine->RegisterObjectMethod("Texture2D", "bool SetSize(int, int, uint, TextureUsage usage = TEXTURE_STATIC)", asMETHOD(Texture2D, SetSize), asCALL_THISCALL);
     engine->RegisterObjectMethod("Texture2D", "bool Load(Image@+, bool useAlpha = false)", asFUNCTION(Texture2DLoad), asCALL_CDECL_OBJLAST);
     engine->RegisterObjectMethod("Texture2D", "RenderSurface@+ get_renderSurface() const", asMETHOD(Texture2D, GetRenderSurface), asCALL_THISCALL);
+
+    RegisterTexture<Texture3D>(engine, "Texture3D");
+    engine->RegisterObjectMethod("Texture3D", "bool SetSize(int, int, uint, TextureUsage usage = TEXTURE_STATIC)", asMETHOD(Texture3D, SetSize), asCALL_THISCALL);
+    engine->RegisterObjectMethod("Texture3D", "bool Load(Image@+, bool useAlpha = false)", asFUNCTION(Texture3DLoad), asCALL_CDECL_OBJLAST);
+    engine->RegisterObjectMethod("Texture3D", "RenderSurface@+ get_renderSurface() const", asMETHOD(Texture3D, GetRenderSurface), asCALL_THISCALL);
     
     RegisterTexture<TextureCube>(engine, "TextureCube");
     engine->RegisterObjectMethod("TextureCube", "bool SetSize(int, uint, TextureUsage usage = TEXTURE_STATIC)", asMETHOD(TextureCube, SetSize), asCALL_THISCALL);

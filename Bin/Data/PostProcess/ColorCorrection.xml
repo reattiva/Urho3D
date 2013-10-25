@@ -1,0 +1,10 @@
+<renderpath>
+	<command type="quad" tag="ColorCorrection" vs="ColorCorrection" ps="ColorCorrection" output="hdrcopy">
+        <parameter name="ColorCorrection" value="10.0" />
+        <texture unit="diffuse" name="hdr" />
+        <texture unit="volume" name="Textures/LUTIdentity.xml" />
+    </command>
+    <command type="quad" vs="CopyFrameBuffer" ps="CopyFrameBuffer" output="hdr">
+        <texture unit="diffuse" name="hdrcopy" />
+    </command>
+</renderpath>

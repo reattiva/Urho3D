@@ -64,3 +64,11 @@ float3 CombineColors(float3 color1, float3 color2, float2 colorMix)
     rgb1 *= saturate(1.0 - rgb2);
     return rgb1 + rgb2;
 }
+
+float3 ColorCorrection(float3 color, sampler3D lut)
+{
+	float lutSize = 16.0;
+	float scale = (lutSize - 1.0) / lutSize;
+	float offset = 1.0 / (2.0 * lutSize);
+	return tex3D(lut, clamp(color, 0.0, 1.0) * scale + offset).rgb;
+}

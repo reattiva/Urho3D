@@ -1,0 +1,5 @@
+<renderpath>
+    <command type="quad" vs="CopyFrameBuffer" ps="CopyFrameBuffer" output="viewport">
+        <texture unit="diffuse" name="hdr" />
+    </command>
+</renderpath>

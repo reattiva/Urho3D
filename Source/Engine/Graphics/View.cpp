@@ -23,6 +23,7 @@
 #include "Precompiled.h"
 #include "Camera.h"
 #include "DebugRenderer.h"
+#include "FileSystem.h"
 #include "Geometry.h"
 #include "Graphics.h"
 #include "GraphicsImpl.h"
@@ -39,6 +40,7 @@
 #include "Skybox.h"
 #include "Technique.h"
 #include "Texture2D.h"
+#include "Texture3D.h"
 #include "TextureCube.h"
 #include "VertexBuffer.h"
 #include "View.h"
@@ -1486,13 +1488,28 @@ void View::SetTextures(RenderPathCommand& command)
         }
         
         // Bind a texture from the resource system
-        Texture2D* texture = cache->GetResource<Texture2D>(command.textureNames_[i]);
-        if (texture)
-            graphics_->SetTexture(i, texture);
+        // Detect 3d textures by file extension: they are defined by an XML file
+        if (GetExtension(command.textureNames_[i]) == ".xml")
+        {
+            Texture3D* texture = cache->GetResource<Texture3D>(command.textureNames_[i]);
+            if (texture)
+                graphics_->SetTexture(i, texture);
+            else
+            {
+                // If requesting a texture fails, clear the texture name to prevent redundant attempts
+                command.textureNames_[i] = String::EMPTY;
+            }
+        }
         else
         {
-            // If requesting a texture fails, clear the texture name to prevent redundant attempts
-            command.textureNames_[i] = String::EMPTY;
+            Texture2D* texture = cache->GetResource<Texture2D>(command.textureNames_[i]);
+            if (texture)
+                graphics_->SetTexture(i, texture);
+            else
+            {
+                // If requesting a texture fails, clear the texture name to prevent redundant attempts
+                command.textureNames_[i] = String::EMPTY;
+            }
         }
     }
 }

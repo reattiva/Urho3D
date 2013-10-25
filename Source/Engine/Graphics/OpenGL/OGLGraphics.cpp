@@ -52,6 +52,7 @@
 #include "Terrain.h"
 #include "TerrainPatch.h"
 #include "Texture2D.h"
+#include "Texture3D.h"
 #include "TextureCube.h"
 #include "VertexBuffer.h"
 #include "Zone.h"
@@ -2751,6 +2752,7 @@ void Graphics::SetTextureUnitMappings()
     textureUnits_["NormalBuffer"] = TU_NORMALBUFFER;
     textureUnits_["DepthBuffer"] = TU_DEPTHBUFFER;
     textureUnits_["LightBuffer"] = TU_LIGHTBUFFER;
+    textureUnits_["VolumeMap"] = TU_VOLUMEMAP;
 }
 
 void RegisterGraphicsLibrary(Context* context)
@@ -2761,6 +2763,7 @@ void RegisterGraphicsLibrary(Context* context)
     Shader::RegisterObject(context);
     Technique::RegisterObject(context);
     Texture2D::RegisterObject(context);
+    Texture3D::RegisterObject(context);
     TextureCube::RegisterObject(context);
     Camera::RegisterObject(context);
     Drawable::RegisterObject(context);

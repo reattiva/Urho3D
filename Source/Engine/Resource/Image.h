@@ -28,6 +28,8 @@
 namespace Urho3D
 {
 
+static const int COLOR_LUT_SIZE = 16;
+
 /// Supported compressed image formats.
 enum CompressedFormat
 {
@@ -50,6 +52,7 @@ struct CompressedLevel
         data_(0),
         width_(0),
         height_(0),
+        depth_(0),
         blockSize_(0),
         dataSize_(0),
         rowSize_(0),
@@ -68,6 +71,8 @@ struct CompressedLevel
     int width_;
     /// Height.
     int height_;
+    /// Depth.
+    int depth_;
     /// Block size in bytes.
     unsigned blockSize_;
     /// Total data size in bytes.
@@ -94,10 +99,14 @@ public:
     /// Load resource. Return true if successful.
     virtual bool Load(Deserializer& source);
     
-    /// Set size and number of color components.
+    /// Set 2D size and number of color components.
     void SetSize(int width, int height, unsigned components);
+    /// Set 3D size and number of color components.
+    void SetSize(int width, int height, int depth, unsigned components);
     /// Set data.
     void SetData(const unsigned char* pixelData);
+    /// Load as color LUT. Return true if successful.
+    bool LoadColorLUT(Deserializer& source);
     /// Flip image vertically.
     void FlipVertical();
     /// Save in BMP format. Return true if successful.
@@ -113,6 +122,8 @@ public:
     int GetWidth() const { return width_; }
     /// Return height.
     int GetHeight() const { return height_; }
+    /// Return depth.
+    int GetDepth() const { return depth_; }
     /// Return number of color components.
     unsigned GetComponents() const { return components_; }
     /// Return pixel data.
@@ -138,6 +149,8 @@ private:
     int width_;
     /// Height.
     int height_;
+    /// Depth.
+    int depth_;
     /// Number of color components.
     unsigned components_;
     /// Number of compressed mip levels.

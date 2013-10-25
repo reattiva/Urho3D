@@ -77,6 +77,7 @@ Texture::Texture(Context* context) :
     requestedLevels_(0),
     width_(0),
     height_(0),
+    depth_(0),
     shadowCompare_(false),
     parametersDirty_(true),
     filterMode_(FILTER_DEFAULT),
@@ -263,6 +264,13 @@ int Texture::GetLevelHeight(unsigned level) const
     return Max(height_ >> level, 1);
 }
 
+int Texture::GetLevelDepth(unsigned level) const
+{
+    if (level > levels_)
+        return 0;
+    return Max(depth_ >> level, 1);
+}
+
 unsigned Texture::GetDataSize(int width, int height) const
 {
     if (IsCompressed())
@@ -276,6 +284,11 @@ unsigned Texture::GetDataSize(int width, int height) const
     }
     else
         return GetRowDataSize(width) * height;
+}
+
+unsigned Texture::GetDataSize(int width, int height, int depth) const
+{
+    return depth * GetDataSize(width, height);
 }
 
 unsigned Texture::GetRowDataSize(int width) const
@@ -443,7 +456,7 @@ void Texture::LoadParameters(const XMLElement& elem)
             if (paramElem.HasAttribute("high"))
                 SetMipsToSkip(QUALITY_HIGH, paramElem.GetInt("high"));
         }
-        
+
         if (name == "srgb")
             SetSRGB(paramElem.GetBool("enable"));
         
