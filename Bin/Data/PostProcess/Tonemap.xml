@@ -1,14 +1,11 @@
 <renderpath>
-    <command type="quad" enabled="false" tag="Reinhard" vs="Tonemap" ps="Tonemap_Reinhard" output="hdrcopy">
+    <command type="quad" enabled="false" tag="Reinhard" vs="Tonemap" ps="Tonemap_Reinhard" output="viewport">
         <parameter name="TonemapExposer" value="10.0" />
-        <texture unit="diffuse" name="hdr" />
+        <texture unit="diffuse" name="viewport" />
     </command>
-    <command type="quad" enabled="true" tag="Filmic" vs="Tonemap" ps="Tonemap_Filmic" output="hdrcopy">
+    <command type="quad" enabled="true" tag="Filmic" vs="Tonemap" ps="Tonemap_Filmic" output="viewport">
         <parameter name="TonemapExposer" value="16.0" />
-        <parameter name="TonemapWhiteCutoff" value="11.0" />
-        <texture unit="diffuse" name="hdr" />
-    </command>
-    <command type="quad" vs="CopyFrameBuffer" ps="CopyFrameBuffer" output="hdr">
-        <texture unit="diffuse" name="hdrcopy" />
+        <parameter name="TonemapWhiteCutoff" value="11.3" />
+        <texture unit="diffuse" name="viewport" />
     </command>
 </renderpath>

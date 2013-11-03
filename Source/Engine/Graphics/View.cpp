@@ -1610,10 +1610,11 @@ void View::AllocateScreenBuffers()
         neededBuffers = 1;
     
     // Follow final rendertarget format, or use RGB to match the backbuffer format
-    unsigned format = renderTarget_ ? renderTarget_->GetParentTexture()->GetFormat() : Graphics::GetRGBFormat();
+    bool hdrRendering = renderer_->GetHDRRendering();
+    unsigned format = renderTarget_ ? renderTarget_->GetParentTexture()->GetFormat() : hdrRendering ? Graphics::GetRGBAFloat16Format() : Graphics::GetRGBFormat();
     
     #ifdef USE_OPENGL
-    if (deferred_)
+    if (deferred_ && !hdrRendering)
         format = Graphics::GetRGBAFormat();
     #endif
     
