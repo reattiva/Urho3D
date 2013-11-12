@@ -45,28 +45,30 @@ public:
     
     /// Load resource. Return true if successful.
     virtual bool Load(Deserializer& source);
-    /// Save to an XML file. Return true if successful.
-    bool SaveXML(Serializer& dest) const;
-
+    
     /// Return texture file name.
     const String& GetTextureFileName() const { return textureFileName_; }
     /// Return texture.
     Texture* GetTexture() const { return texture_; }
-    /// Return texture rectangle.
-    const IntRect& GetTextureRect(const String& name) const;
+    /// Return all sprite names.
+    const Vector<String>& GetSpriteNames() const { return spriteNames_; }
+    /// Return sprite texture rectangle.
+    const IntRect& GetSpriteTextureRect(const String& name) const;
 
 private:
-    /// Load sprite sheet file.
-    bool LoadSpriteSheet(XMLElement& rootElem);
     /// Load OGRE/CEGUI image set file.
     bool LoadImageSet(XMLElement& rootElem);
+    /// Load from property list file.
+    bool LoadPropertyList(XMLElement& rootElem);    
 
     /// Texture file name.
     String textureFileName_;
     /// Texture.
     SharedPtr<Texture> texture_;
-    /// Name to texture rect mapping.
-    HashMap<String, IntRect> nameToTextureRectMapping_;
+    /// Sprite names.
+    Vector<String> spriteNames_;
+    /// Sprite texture rect mapping.
+    HashMap<String, IntRect> spriteTextureRectMapping_;
 };
 
 }

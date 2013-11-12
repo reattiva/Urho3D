@@ -23,15 +23,15 @@
 #pragma once
 
 #include "Drawable.h"
-#include "GraphicsDefs.h"
 #include "VertexBuffer.h"
 
 namespace Urho3D
 {
 
+class Texture;
 class SpriteSheet;
 
-/// Vertex2D.
+/// 2D vertex.
 struct Vertex2D
 {
     /// Position.
@@ -46,7 +46,7 @@ struct Vertex2D
 class URHO3D_API Sprite2D : public Drawable
 {
     OBJECT(Sprite2D);
-    
+
 public:
     /// Construct.
     Sprite2D(Context* context);
@@ -54,7 +54,7 @@ public:
     ~Sprite2D();
     /// Register object factory. Drawable must be registered first.
     static void RegisterObject(Context* context);
-    
+
     /// Apply attribute changes that can not be applied immediately.
     virtual void ApplyAttributes();
     /// Calculate distance and prepare batches for rendering. May be called from worker thread(s), possibly re-entrantly.
@@ -64,6 +64,12 @@ public:
     /// Return whether a geometry update is necessary, and if it can happen in a worker thread.
     virtual UpdateGeometryType GetUpdateGeometryType();
 
+    /// Set size.
+    void SetSize(const Vector2& size);
+    /// Set size.
+    void SetSize(float w, float h);
+    /// Set use texture size.
+    void SetUseTextureSize(bool useTextureSize);
     /// Set flip X.
     void SetFilpX(bool flipX);
     /// Set flip Y.
@@ -77,7 +83,7 @@ public:
     /// Set texture.
     void SetTexture(Texture* texture);
     /// Set texture rectangle.
-    void SetTextureRect(const IntRect& rect);
+    void SetTextureRect(const IntRect& textureRect);
     /// Set use whole texture.
     void SetUseWholeTexture(bool useWholeTexture);
     /// Set sprite sheet.
@@ -85,12 +91,16 @@ public:
     /// Set sprite name.
     void SetSpriteName(const String& spriteName);
     /// Set sprite from sprite sheet and sprite name.
-    bool SetSprite(SpriteSheet* spriteSheet, const String& spriteName);
+    void SetSprite(SpriteSheet* spriteSheet, const String& spriteName);
     /// Set material.
     void SetMaterial(Material* material);
     /// Set blend mode.
     void SetBlendMode(BlendMode mode);
 
+    /// Return size.
+    const Vector2& GetSize() const { return size_; }
+    /// Return use texture size.
+    bool GetUseTextureSize() const { return useTextureSize_; }
     /// Return flip X.
     bool GetFlipX() const { return flipX_; }
     /// Return flip Y.
@@ -130,17 +140,15 @@ public:
 protected:
     /// Recalculate the world-space bounding box.
     virtual void OnWorldBoundingBoxUpdate();
-    
-private:
-    /// Mark sprite & geometry dirty.
-    void MarkSpriteDirty();
-    /// Update sprite.
-    void UpdateSprite();
-    /// Update sprite batches.
-    void UpdateSpriteBatches();
+    /// Update vertices.
+    virtual void UpdateVertices();
     /// Create materials for sprite rendering.
-    void UpdateSpriteMaterials(bool forceUpdate = false);
+    virtual void UpdateMaterial(bool forceUpdate = false);
 
+    /// Size.
+    Vector2 size_;
+    /// Use texture size.
+    bool useTextureSize_;
     /// Flip X.
     bool flipX_;
     /// Flip Y.
@@ -161,17 +169,21 @@ private:
     String spriteName_;
     /// Material.
     SharedPtr<Material> material_;
+    /// Used material.
+    SharedPtr<Material> usedMaterial_;
     /// Blend mode.
     BlendMode blendMode_;
 
-    /// Geometries.
-    Vector<SharedPtr<Geometry> > geometries_;
-    /// Vertex buffer.
-    SharedPtr<VertexBuffer> vertexBuffer_;
     /// Vertices.
     Vector<Vertex2D> vertices_;
-    /// sprite needs update flag.
-    bool spriteDirty_;
+    /// Geometry.
+    SharedPtr<Geometry> geometry_;
+    /// Vertex buffer.
+    SharedPtr<VertexBuffer> vertexBuffer_;    
+    /// Vertices dirty flag.
+    bool verticesDirty_;
+    /// Material dirty flag.
+    bool materialDirty_;
     /// Geometry dirty flag.
     bool geometryDirty_;
 };
