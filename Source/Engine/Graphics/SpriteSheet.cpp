@@ -127,6 +127,13 @@ bool SpriteSheet::LoadPropertyList(XMLElement& rootElem)
     const PLDictionary& root = plist.GetRoot();
 
     const PLDictionary& metadata = root.GetDictionary("metadata");
+    int format = metadata.GetInt("format");
+    if (format != 1 && format != 2)
+    {
+        LOGERROR("Unsupported format.");
+        return false;
+    }
+
     textureFileName_ = metadata.GetString("realTextureFileName");
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     texture_ = cache->GetResource<Texture2D>(textureFileName_);
@@ -140,13 +147,9 @@ bool SpriteSheet::LoadPropertyList(XMLElement& rootElem)
     for (PLDictionary::ConstIterator i = frames.Begin(); i != frames.End(); ++i)
     {
         String name = i->first_;
+        
         const PLDictionary& frame = i->second_->ToDictionary();        
-        String frameString = frame.GetString("frame");
-
-        IntRect textureRect;        
-        sscanf(frameString.CString(), "{{%d,%d},{%d,%d}}", &textureRect.left_, &textureRect.top_, &textureRect.right_, &textureRect.bottom_);
-        textureRect.right_ += textureRect.left_;
-        textureRect.bottom_ += textureRect.top_;
+        IntRect textureRect = PLStringToIntRect(frame.GetString("frame"));
 
         spriteNames_.Push(name);
         spriteTextureRectMapping_[name] = textureRect;
