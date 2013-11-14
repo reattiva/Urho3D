@@ -530,6 +530,15 @@ XMLElement XMLElement::GetParent() const
     return XMLElement(file_, node.parent().internal_object());
 }
 
+Urho3D::String XMLElement::GetValue() const
+{
+    if (!file_ || (!node_ && !xpathNode_))
+        return String();
+
+    const pugi::xml_node& node = xpathNode_ ? xpathNode_->node() : pugi::xml_node(node_);
+    return String(node.first_child().value());
+}
+
 unsigned XMLElement::GetNumAttributes() const
 {
     if (!file_ || (!node_ && !xpathNode_))

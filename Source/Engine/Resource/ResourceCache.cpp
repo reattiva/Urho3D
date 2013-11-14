@@ -28,6 +28,7 @@
 #include "Image.h"
 #include "Log.h"
 #include "PackageFile.h"
+#include "PropertyList.h"
 #include "ResourceCache.h"
 #include "ResourceEvents.h"
 #include "XMLFile.h"
@@ -796,6 +797,7 @@ void ResourceCache::HandleBeginFrame(StringHash eventType, VariantMap& eventData
 void RegisterResourceLibrary(Context* context)
 {
     Image::RegisterObject(context);
+    PropertyList::RegisterObject(context);
     XMLFile::RegisterObject(context);
 }
 

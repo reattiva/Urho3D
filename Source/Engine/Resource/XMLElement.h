@@ -165,6 +165,8 @@ public:
     XMLElement GetNext(const char* name) const;
     /// Return parent element.
     XMLElement GetParent() const;
+    /// Return value.
+    String GetValue() const;
     /// Return number of attributes.
     unsigned GetNumAttributes() const;
     /// Return whether has an attribute.
