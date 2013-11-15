@@ -39,9 +39,10 @@ enum EmitterType2D
 struct URHO3D_API Particle2D
 {
     /// Lifetime.
-    float timeToLive_;    
-    /// Start position.
-    Vector2 startPos_;
+    float timeToLive_;
+    /// Init position.
+    Vector2 initPos_;
+
     /// Position.
     Vector2 position_;
     union
@@ -99,29 +100,31 @@ public:
     /// Register object factory. Drawable must be registered first.
     static void RegisterObject(Context* context);
 
+    /// Update before octree reinsertion. Is called from a worker thread.
+    virtual void Update(const FrameInfo& frame);
+
     /// Load from file.
     bool Load(const String& fileName);
+    /// Save to file.
+    bool Save(const String& fileName) const;
     /// Load from XML element.
     bool LoadXML(const XMLElement& source);
 
-    /// Update.
-    void Update(float stepTime);
-    /// Set emitter type.
-    void SetEmitterType(EmitterType2D type);
-    /// Set gravity.
-    void SetGravity(const Vector2& gravity);
-    /// Set max particles.
-    void SetMaxParticles(int maxParticles);
     /// Set duration.
     void SetDuration(float duration);
+    /// Set max particles.
+    void SetMaxParticles(int maxParticles);
+    /// Set emission rate.
+    void SetEmissionRate(float emissionRate);
     /// Set min particle life span.
     void SetMinParticleLifespan(float lifeSpan);
     /// Set max particle life span.
     void SetMaxParticleLifespan(float lifeSpan);
-    /// Set min speed.
-    void SetMinSpeed(float speed);
-    /// Set max speed.
-    void SetMaxSpeed(float speed);    
+
+    /// Set emitter type.
+    void SetEmitterType(EmitterType2D type);
+    /// Set gravity.
+    void SetGravity(const Vector2& gravity);
     /// Set min radial acceleration.
     void SetMinRadialAcceleration(float accel);
     /// Set max radial acceleration.
@@ -130,6 +133,7 @@ public:
     void SetMinTangentialAcceleration(float accel);
     /// Set max tangential acceleration.
     void SetMaxTangentialAcceleration(float accel);
+
     /// Set min start radius.
     void SetMinStartRadius(float radius);
     /// Set max start radius
@@ -142,10 +146,20 @@ public:
     void SetMinRotatePerSecond(float rotatePerSecond);
     /// Set max rotate per second.
     void SetMaxRotatePerSecond(float rotatePerSecond);    
+
+    /// Set min position.
+    void SetMinPosition(const Vector2& position);
+    /// Set max position.
+    void SetMaxPosition(const Vector2& position);
     /// Set min angle.
     void SetMinAngle(float angle);
     /// Set max angle.
     void SetMaxAngle(float angle);
+    /// Set min speed.
+    void SetMinSpeed(float speed);
+    /// Set max speed.
+    void SetMaxSpeed(float speed);    
+
     /// Set min start color.
     void SetMinStartColor(const Color& color);
     /// Set max start color.
@@ -170,23 +184,22 @@ public:
     void SetMinEndSpin(float spin);
     /// Set max end spin.
     void SetMaxEndSpin(float spin);
-    
-    /// Return emitter type.
-    EmitterType2D GetEmitterType() const { return emitterType_; }    
-    /// Return gravity.
-    const Vector2& GetGravity() const { return gravity_; }
-    /// Return max particles.
-    int GetMaxParticles() const { return maxParticles_; }
+
     /// Return duration.
     float GetDuration() const { return duration_; }
+    /// Return max particles.
+    int GetMaxParticles() const { return maxParticles_; }
+    /// Return emission rate.
+    float GetEmissionRate() const { return emissionRate_; }
     /// Return min particle life time.
     float GetMinParticleLifespan() const { return minParticleLifespan_; }
     /// Return max particle life time.
     float GetMaxParticleLifespan() const { return maxParticleLifespan_; }
-    /// Return min speed.
-    float GetMinSpeed() const { return minSpeed_; }
-    /// Return max speed.
-    float GetMaxSpeed() const { return maxSpeed_; }
+
+    /// Return emitter type.
+    EmitterType2D GetEmitterType() const { return emitterType_; }    
+    /// Return gravity.
+    const Vector2& GetGravity() const { return gravity_; }
     /// Return min radial acceleration.
     float GetMinRadialAcceleration() const { return minRadialAcceleration_; }
     /// Return max radial acceleration.
@@ -195,6 +208,7 @@ public:
     float GetMinTangentialAcceleration() const { return minTangentialAcceleration_; }
     /// Return max tangential acceleration.
     float GetMaxTangentialAcceleration() const { return maxTangentialAcceleration_; }
+    
     /// Return min start radius.
     float GetMinStartRadius() const { return minStartRadius_; }
     /// Return max start radius.
@@ -207,10 +221,21 @@ public:
     float GetMinRotatePerSecond() const { return minRotatePerSecond_; }
     /// Return max rotate per second.
     float GetMaxRotatePerSecond() const { return maxRotatePerSecond_; }
+    
+    /// Return min position.
+    const Vector2& GetMinPosition() const { return minPosition_; }
+    /// Return max position.
+    const Vector2& GetMaxPosition() const { return maxPosition_; }
     /// Return min angle.
     float GetMinAngle() const { return minAngle_; }
     /// Return max angle.
     float GetMaxAngle() const { return maxAngle_; }
+    /// Return min speed.
+    float GetMinSpeed() const { return minSpeed_; }
+    /// Return max speed.
+    float GetMaxSpeed() const { return maxSpeed_; }    
+    
+
     /// Return min start color.
     const Color& GetMinStartColor() const { return minStartColor_; }
     /// Return max start color.
@@ -234,27 +259,29 @@ public:
     /// Return min end spin.
     float GetMinEndSpin() const { return  minEndSpin_; }
     /// Return max end spin.
-    float GetMaxEndSpinVariance() const { return maxEndSpin_; }
+    float GetMaxEndSpin() const { return maxEndSpin_; }
 
 private:
+    /// Update vertices.
+    virtual void UpdateVertices();
     /// Emit new particle.
     void EmitNewParticle();
-    /// Max particles.
-    int maxParticles_;
+
     /// Duration.
     float duration_;
-    /// Emitter type.
-    EmitterType2D emitterType_;
-    /// Gravity
-    Vector2 gravity_;
+    /// Max particles.
+    int maxParticles_;
+    /// Emission rate.
+    float emissionRate_;
     /// Min particle lifetime.
     float minParticleLifespan_;
     /// Max particle lifetime.
     float maxParticleLifespan_;
-    /// Min speed.
-    float minSpeed_;
-    /// Max speed.
-    float maxSpeed_;
+
+    /// Emitter type.
+    EmitterType2D emitterType_;
+    /// Gravity
+    Vector2 gravity_;
     /// Min radial acceleration.
     float minRadialAcceleration_;
     /// max radial acceleration.
@@ -263,6 +290,7 @@ private:
     float minTangentialAcceleration_;
     /// Max tangential acceleration.
     float maxTangentialAcceleration_;
+
     /// Min start radius.
     float minStartRadius_;
     /// Max start radius.
@@ -275,10 +303,20 @@ private:
     float minRotatePerSecond_;
     /// Max rotate per second
     float maxRotatePerSecond_;
+
+    /// Min position.
+    Vector2 minPosition_;
+    /// Max position.
+    Vector2 maxPosition_;
     /// Min angle.
     float minAngle_;
     /// Max angle.
     float maxAngle_;
+    /// Min speed.
+    float minSpeed_;
+    /// Max speed.
+    float maxSpeed_;    
+
     /// Min start color.
     Color minStartColor_;
     /// Max start color.
@@ -303,6 +341,7 @@ private:
     float minEndSpin_;
     /// Min max spin.
     float maxEndSpin_;
+
     /// Lifetime.
     float timeToLive_;
     /// Particles.

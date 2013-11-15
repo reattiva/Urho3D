@@ -1,0 +1,50 @@
+$#include "Sprite2D.h"
+
+enum BlendMode{};
+
+class Sprite2D : public Drawable
+{
+public:
+    void SetSize(const Vector2& size);
+    void SetSize(float w, float h);
+    void SetUseTextureSize(bool useTextureSize);
+    void SetFilpX(bool flipX);
+    void SetFlipY(bool flipY);
+    void SetHotSpot(const Vector2& hotSpot);
+    void SetHotSpot(float x, float y);
+    void SetColor(const Color& color);
+    void SetTexture(Texture* texture);
+    void SetTextureRect(const IntRect& textureRect);
+    void SetUseWholeTexture(bool useWholeTexture);
+    void SetSpriteSheet(SpriteSheet* spriteSheet);
+    void SetSpriteName(const String& spriteName);
+    void SetSprite(SpriteSheet* spriteSheet, const String& spriteName);
+    void SetMaterial(Material* material);
+    void SetBlendMode(BlendMode mode);
+
+    const Vector2& GetSize() const;
+    bool GetUseTextureSize() const;
+    bool GetFlipX() const;
+    bool GetFlipY() const;
+    const Vector2& GetHotSpot() const;
+    const Color& GetColor() const;
+    Texture* GetTexture() const;
+    const IntRect& GetTextureRect() const;
+    bool IsUseWholeTexture() const;
+    SpriteSheet* GetSpriteSheet() const;
+    const String& GetSpriteName() const;
+    Material* GetMaterial() const;
+    BlendMode GetBlendMode() const;
+    
+    tolua_property__get_set Vector2 size;
+    tolua_property__get_set bool useTextureSize;
+    tolua_property__get_set bool flipX;
+    tolua_property__get_set bool flipY;
+    tolua_property__get_set Vector2 hotSpot;
+    tolua_property__get_set Color color;
+    tolua_property__get_set Texture* texture;
+    tolua_property__get_set bool useWholeTexture;
+    tolua_property__get_set SpriteSheet* spriteSheet;
+    tolua_property__get_set Material* material;
+    tolua_property__get_set BlendMode blendMode;
+};
