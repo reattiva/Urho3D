@@ -37,10 +37,10 @@ public:
     /// Node type.
     enum NodeType
     {
-        NT_NONE = 0, 
-        NT_VALUE, 
+        NT_NONE = 0,
+        NT_VALUE,
         NT_ARRAY,
-        NT_DICTIONARY,        
+        NT_DICTIONARY,
     };
 
     /// Constructor.
@@ -56,7 +56,7 @@ public:
     /// Return string.
     virtual const String& GetString() const;
     /// Convert to array.
-    virtual const PLArray& ToArray() const; 
+    virtual const PLArray& ToArray() const;
     /// Convert to dictionary.
     virtual const PLDictionary& ToDictionary() const;
 
@@ -195,4 +195,7 @@ private:
     /// Root.
     PLDictionary* root_;
 };
+
+URHO3D_API IntRect PLStringToIntRect(const String& string);
+URHO3D_API IntVector2 PLStringToIntVector2(const String& string);
 }

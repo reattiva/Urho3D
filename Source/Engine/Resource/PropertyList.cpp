@@ -199,7 +199,7 @@ const PLNode& PLDictionary::Get(const String& key) const
     return PLValue::EMPTY;
 }
 
-PropertyList::PropertyList(Context* context) : Resource(context), 
+PropertyList::PropertyList(Context* context) : Resource(context),
     root_(0)
 {
 }
@@ -269,7 +269,7 @@ PLDictionary* PropertyList::ParseDictionary(const XMLElement& element)
             delete dictionary;
             return 0;
         }
-        
+
         (*dictionary)[key] = value;
 
         child = child.GetNext();
@@ -307,7 +307,7 @@ PLNode* PropertyList::Parse(const XMLElement& element)
     if (name == "true")
         return new PLValue(true);
     else if (name == "false")
-        return new PLValue(false);    
+        return new PLValue(false);
     else if (name == "real")
         return new PLValue(ToFloat(element.GetValue()));
     else if (name == "integer")
@@ -321,6 +321,24 @@ PLNode* PropertyList::Parse(const XMLElement& element)
 
     LOGERROR("Unknown data type");
     return 0;
+}
+
+URHO3D_API IntRect PLStringToIntRect(const String& string)
+{
+    IntRect result;
+    sscanf(string.CString(), "{{%d,%d},{%d,%d}}", &result.left_, &result.top_, &result.right_, &result.bottom_);
+    result.right_ += result.left_;
+    result.bottom_ += result.top_;
+
+    return result;
+}
+
+URHO3D_API IntVector2 PLStringToIntVector2(const String& string)
+{
+    IntVector2 result;
+    sscanf(string.CString(), "{%d,%d}", &result.x_, &result.y_);
+
+    return result;
 }
 
 }

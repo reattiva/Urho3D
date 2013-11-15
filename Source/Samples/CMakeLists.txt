@@ -58,3 +58,5 @@ add_subdirectory (21_AngelScriptIntegration)
 if (ENABLE_LUA)
     add_subdirectory (22_LuaIntegration)
 endif ()
+
+add_subdirectory (23_Sprite2DDemo)

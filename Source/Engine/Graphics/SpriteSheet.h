@@ -45,7 +45,11 @@ public:
     
     /// Load resource. Return true if successful.
     virtual bool Load(Deserializer& source);
-    
+    /// Save resource. Return true if successful.
+    virtual bool Save(Serializer& dest) const;
+
+    /// Set texture file name.
+    bool SetTextureFileName(const String& textureFileName);
     /// Return texture file name.
     const String& GetTextureFileName() const { return textureFileName_; }
     /// Return texture.
@@ -56,10 +60,10 @@ public:
     const IntRect& GetSpriteTextureRect(const String& name) const;
 
 private:
-    /// Load OGRE/CEGUI image set file.
-    bool LoadImageSet(XMLElement& rootElem);
+    /// Load from sprite sheet file.
+    bool LoadSpriteSheet(XMLElement& source);
     /// Load from property list file.
-    bool LoadPropertyList(XMLElement& rootElem);    
+    bool LoadPropertyList(XMLElement& source);    
 
     /// Texture file name.
     String textureFileName_;

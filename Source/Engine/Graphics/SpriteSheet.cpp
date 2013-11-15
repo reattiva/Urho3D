@@ -35,8 +35,7 @@
 namespace Urho3D
 {
 
-SpriteSheet::SpriteSheet(Context* context) :
-    Resource(context)
+SpriteSheet::SpriteSheet(Context* context) : Resource(context)
 {
 }
 
@@ -51,6 +50,9 @@ void SpriteSheet::RegisterObject(Context* context)
 
 bool SpriteSheet::Load(Deserializer& source)
 {
+    spriteNames_.Clear();
+    spriteTextureRectMapping_.Clear();
+
     SharedPtr<XMLFile> xmlFile(new XMLFile(context_));
     if(!xmlFile->Load(source))
     {
@@ -67,8 +69,8 @@ bool SpriteSheet::Load(Deserializer& source)
         return false;
     }
 
-    if (rootElem.GetName() == "Imageset")
-        return LoadImageSet(rootElem);
+    if (rootElem.GetName() == "SpriteSheet")
+        return LoadSpriteSheet(rootElem);
     else if (rootElem.GetName() == "plist")
         return LoadPropertyList(rootElem);
     else
@@ -76,6 +78,43 @@ bool SpriteSheet::Load(Deserializer& source)
         LOGERROR("Invalid sprite sheet file");
         return false;
     }
+}
+
+bool SpriteSheet::Save(Serializer& dest) const
+{
+    XMLFile xmlFile(context_);
+    
+    XMLElement root = xmlFile.CreateRoot("SpriteSheet");
+    root.SetString("texture", textureFileName_);
+
+    for (HashMap<String, IntRect>::ConstIterator i = spriteTextureRectMapping_.Begin(); i != spriteTextureRectMapping_.End(); ++i)
+    {
+        XMLElement spriteElem = root.CreateChild("Sprite");
+        spriteElem.SetString("name", i->first_);
+
+        const IntRect& textureRect = i->second_;
+        spriteElem.SetInt("left", textureRect.left_);
+        spriteElem.SetInt("top", textureRect.top_);
+        spriteElem.SetInt("right", textureRect.right_);
+        spriteElem.SetInt("bottom", textureRect.bottom_);
+    }
+
+    return xmlFile.Save(dest);
+}
+
+bool SpriteSheet::SetTextureFileName(const String& textureFileName)
+{
+    textureFileName_ = textureFileName;
+
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    texture_ = cache->GetResource<Texture2D>(textureFileName_);
+    if (!texture_)
+    {
+        LOGERROR("Count not load texture");
+        return false;
+    }
+
+    return true;
 }
 
 const IntRect& SpriteSheet::GetSpriteTextureRect(const String& name) const
@@ -87,41 +126,35 @@ const IntRect& SpriteSheet::GetSpriteTextureRect(const String& name) const
     return IntRect::ZERO;
 }
 
-bool SpriteSheet::LoadImageSet(XMLElement &rootElem)
+bool SpriteSheet::LoadSpriteSheet(XMLElement& source)
 {
-    textureFileName_ = rootElem.GetAttribute("Imagefile");
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-    texture_ = cache->GetResource<Texture2D>(textureFileName_);
-    if (!texture_)
-    {
-        LOGERROR("Count not load texture");
+    if (!SetTextureFileName(source.GetAttribute("texture")))
         return false;
-    }
 
-    XMLElement imageElem = rootElem.GetChild("Image");
-    while (imageElem)
+    XMLElement spriteElem = source.GetChild("Sprite");
+    while (spriteElem)
     {
-        String name = imageElem.GetAttribute("Name");
+        String name = spriteElem.GetAttribute("name");
 
         IntRect textureRect;
-        textureRect.left_ = imageElem.GetInt("XPos");
-        textureRect.top_  = imageElem.GetInt("YPos");
-        textureRect.right_ = textureRect.left_ + imageElem.GetInt("Width");
-        textureRect.bottom_ = textureRect.top_ + imageElem.GetInt("Height");
+        textureRect.left_ = spriteElem.GetInt("left");
+        textureRect.top_  = spriteElem.GetInt("top");
+        textureRect.right_ = spriteElem.GetInt("right");
+        textureRect.bottom_ = spriteElem.GetInt("bottom");
 
         spriteNames_.Push(name);
         spriteTextureRectMapping_[name] = textureRect;
 
-        imageElem = imageElem.GetNext("Image");
+        spriteElem = spriteElem.GetNext("Sprite");
     }
 
     return true;
 }
 
-bool SpriteSheet::LoadPropertyList(XMLElement& rootElem)
+bool SpriteSheet::LoadPropertyList(XMLElement& source)
 {
     PropertyList plist(context_);
-    if (!plist.LoadXML(rootElem))
+    if (!plist.LoadXML(source))
         return false;
 
     const PLDictionary& root = plist.GetRoot();
@@ -134,21 +167,15 @@ bool SpriteSheet::LoadPropertyList(XMLElement& rootElem)
         return false;
     }
 
-    textureFileName_ = metadata.GetString("realTextureFileName");
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-    texture_ = cache->GetResource<Texture2D>(textureFileName_);
-    if (!texture_)
-    {
-        LOGERROR("Count not load texture");
+    if (!SetTextureFileName(metadata.GetString("realTextureFileName")))
         return false;
-    }
 
     const PLDictionary& frames = root.GetDictionary("frames");
     for (PLDictionary::ConstIterator i = frames.Begin(); i != frames.End(); ++i)
     {
         String name = i->first_;
-        
-        const PLDictionary& frame = i->second_->ToDictionary();        
+
+        const PLDictionary& frame = i->second_->ToDictionary();
         IntRect textureRect = PLStringToIntRect(frame.GetString("frame"));
 
         spriteNames_.Push(name);

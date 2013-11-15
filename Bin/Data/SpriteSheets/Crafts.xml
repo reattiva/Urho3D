@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<SpriteSheet texture="Textures/Crafts.png">
+	<Sprite name="bigbomber.png" left="304" top="79" right="464" bottom="129" />
+	<Sprite name="blimp.png" left="2" top="2" right="302" bottom="84" />
+	<Sprite name="bomber.png" left="2" top="131" right="120" bottom="175" />
+	<Sprite name="cruise.png" left="2" top="177" right="92" bottom="210" />
+	<Sprite name="deflector.png" left="2" top="212" right="102" bottom="243" />
+	<Sprite name="deltabomber.png" left="164" top="86" right="274" bottom="122" />
+	<Sprite name="deltajet.png" left="164" top="124" right="264" bottom="158" />
+	<Sprite name="fatbomber.png" left="304" top="2" right="502" bottom="77" />
+	<Sprite name="jetfighter.png" left="186" top="192" right="266" bottom="220" />
+	<Sprite name="propfighter.png" left="181" top="160" right="251" bottom="190" />
+	<Sprite name="smalljet.png" left="104" top="210" right="184" bottom="240" />
+	<Sprite name="strafer.png" left="94" top="177" right="179" bottom="208" />
+	<Sprite name="superbomber.png" left="2" top="86" right="162" bottom="129" />
+</SpriteSheet>
