@@ -27,7 +27,9 @@
 #include "ResourceCache.h"
 #include "ParticleEmitter2D.h"
 #include "PropertyList.h"
-#include "Texture.h"
+#include "scene.h"
+#include "SceneEvents.h"
+#include "Texture2D.h"
 
 #include "DebugNew.h"
 
@@ -37,43 +39,73 @@ namespace Urho3D
 extern const char* blendModeNames[];
 extern const char* GEOMETRY_CATEGORY;
 
+#define P2D_ZERO                           0
+#define P2D_ONE                            1
+#define P2D_SRC_COLOR                      0x0300
+#define P2D_ONE_MINUS_SRC_COLOR            0x0301
+#define P2D_SRC_ALPHA                      0x0302
+#define P2D_ONE_MINUS_SRC_ALPHA            0x0303
+#define P2D_DST_ALPHA                      0x0304
+#define P2D_ONE_MINUS_DST_ALPHA            0x0305
+#define P2D_DST_COLOR                      0x0306
+#define P2D_ONE_MINUS_DST_COLOR            0x0307
+#define P2D_SRC_ALPHA_SATURATE             0x0308
+
+static const unsigned p2dDestBlend[] =
+{
+    P2D_ZERO,
+    P2D_ONE,
+    P2D_ZERO,
+    P2D_ONE_MINUS_SRC_ALPHA,
+    P2D_ONE,
+    P2D_ONE_MINUS_SRC_ALPHA,
+    P2D_DST_ALPHA
+};
+
+static const unsigned p2dSrcBlend[] =
+{
+    P2D_ONE,
+    P2D_ONE,
+    P2D_DST_COLOR,
+    P2D_SRC_ALPHA,
+    P2D_SRC_ALPHA,
+    P2D_ONE,
+    P2D_ONE_MINUS_DST_ALPHA
+};
+
 ParticleEmitter2D::ParticleEmitter2D(Context* context) : Sprite2D(context),
     duration_(0.0f),
     maxParticles_(0),
-    emissionRate_(0.0f),
     minParticleLifespan_(0.0f),
     maxParticleLifespan_(0.0f),
-
+    minStartSize_(0.0f),
+    maxStartSize_(0.0f),
+    minEndSize_(0.0f),
+    maxEndSize_(0.0f),
+    minAngle_(0.0f),
+    maxAngle_(0.0f),
+    minStartSpin_(0.0f),
+    maxStartSpin_(0.0f),
+    minEndSpin_(0.0f),
+    maxEndSpin_(0.0f),
     emitterType_(ET_GRAVITY),
+    minSpeed_(0.0f),
+    maxSpeed_(0.0f),
     gravity_(0.0f, 0.0f),
     minRadialAcceleration_(0.0f),
     maxRadialAcceleration_(0.0f),
     minTangentialAcceleration_(0.0f),
     maxTangentialAcceleration_(0.0f),
-
     minStartRadius_(0.0f),
     maxStartRadius_(0.0f),
     minEndRadius_(0.0f),
     maxEndRadius_(0.0f),
     minRotatePerSecond_(0.0f),
     maxRotatePerSecond_(0.0f),
-
     minPosition_(0.0f, 0.0f),
     maxPosition_(0.0f, 0.0f),
-    minAngle_(0.0f),
-    maxAngle_(0.0f),
-    minSpeed_(0.0f),
-    maxSpeed_(0.0f),
-
-    minStartSize_(0.0f),
-    maxStartSize_(0.0f),
-    minEndSize_(0.0f),
-    maxEndSize_(0.0f),
-    minStartSpin_(0.0f),
-    maxStartSpin_(0.0f),
-    minEndSpin_(0.0f),
-    maxEndSpin_(0.0f),
-    timeToLive_(0.0f)
+    timeToLive_(0.0f),
+    emissionRate_(0.0f)
 {
     SetUseTextureSize(false);
     SetUseWholeTexture(true);
@@ -95,21 +127,18 @@ void ParticleEmitter2D::Update(const FrameInfo& frame)
     float timeStep = frame.timeStep_;
     timeToLive_ += timeStep;
 
-    if (duration_ < 0.0f || timeToLive_ < duration_)     
+    if (emissionRate_ > 0.0f)
     {
-        unsigned numParticles = (unsigned)(emissionRate_ * timeToLive_);
-        while (particles_.Size() < numParticles)
+        int emissionCount = (int)(emissionRate_ * timeStep);
+        while (particles_.Size() < maxParticles_ && emissionCount > 0)
+        {           
             EmitNewParticle();
+            --emissionCount;
+        }
     }
 
-    //Vector2 currentPosition = Vector2::ZERO;
-    //if (positionType_== PT_FREE)
-    //    currentPosition = GetNode()->GetWorldPosition();
-    //else
-    //{
-    //    // currentPosition = m_tPosition;
-    //    currentPosition = GetNode()->GetWorldPosition();            
-    //}
+    Vector3 worldPosition = GetNode()->GetWorldPosition();
+    Vector2 currPosition(worldPosition.x_, worldPosition.y_);
 
     unsigned numParticles = particles_.Size();
     for (unsigned i = 0; i < numParticles; ++i)
@@ -121,29 +150,41 @@ void ParticleEmitter2D::Update(const FrameInfo& frame)
         {
             if (emitterType_ == ET_GRAVITY)
             {
-                Vector2 radital = particle.position_ - particle.startPos_;
-                radital.Normalize();
+                Vector2 radial = particle.position_;
+                if (radial.x_ || radial.y_)
+                    radial.Normalize();
 
-                Vector2 accelaration = Vector2(particle.gravityX_, particle.gravityY_);
-                accelaration += radital * particle.radialAccel_;
-                accelaration += Vector2(radital.y_, -radital.x_) * particle.tangentialAccel_;
+                Vector2 tangential(-radial.y_, radial.x_);
 
-                particle.position_ += accelaration * timeStep;
+                radial *= particle.radialAccel_;
+                tangential *= particle.tangentialAccel_;
+
+                Vector2 accelaration = gravity_ + radial + tangential;
+                accelaration *= timeStep;
+                
+                // Speed.
+                particle.velocityX_ += accelaration.x_;
+                particle.velocityY_ += accelaration.y_;
+
+                // Position.
+                particle.position_.x_ += particle.velocityX_ * timeStep;
+                particle.position_.y_ += particle.velocityY_ * timeStep;
             }
             else
-            {				
-                particle.angle_ += particle.angleDelta_ * timeStep;
-                particle.radius_ += particle.radiusDelta_* timeStep;
+            {	
+                particle.angle_ += particle.degreesPerSecond_ * timeStep;
+                particle.radius_ += particle.radiusDelta_ * timeStep;
 
-                particle.position_ = Vector2(Cos(particle.angle_), Sin(particle.angle_)) * particle.radius_;
+                particle.position_.x_ = -Cos(particle.angle_) * particle.radius_;
+                particle.position_.y_ = -Sin(particle.angle_) * particle.radius_;
             }
 
             particle.color_ += particle.colorDelta_ * timeStep;
 
-            particle.size_ += particle.sizeDelta_ * timeStep;
+            particle.size_ += particle.sizeDelta_* timeStep;
             particle.size_ = Max(particle.size_, 0.0f);
 
-            particle.spin_ += particle.spinDelta_ * timeStep;
+            particle.rotation_ += particle.rotationDelta_ * timeStep;
         } 
         else 
         {
@@ -152,6 +193,12 @@ void ParticleEmitter2D::Update(const FrameInfo& frame)
                 particles_[i--] = particles_[numParticles];
         }
     }
+
+    if (particles_.Size() != numParticles)
+        particles_.Resize(numParticles);
+
+    OnMarkedDirty(node_);
+    verticesDirty_ = true;
 }
 
 bool ParticleEmitter2D::Load(const String& fileName)
@@ -164,124 +211,122 @@ bool ParticleEmitter2D::Load(const String& fileName)
 
     const PLDictionary& root = plist->GetRoot();
 
-    duration_ = root.GetFloat("duration");
-    int maxParticles = root.GetInt("maxParticles");
+    int maxParticles = (int)root.GetFloat("maxParticles");
     SetMaxParticles(maxParticles);
-    emissionRate_ = root.GetFloat("emissionRate");
 
-    float particleLifespan = root.GetFloat("particleLifespan");
-    float particleLifespanVar = root.GetFloat("particleLifespanVariance");
-    minParticleLifespan_ = particleLifespan - particleLifespanVar;
-    maxParticleLifespan_ = particleLifespan + particleLifespanVar;
+    minAngle_ = root.GetFloat("angle");
+    maxAngle_ = minAngle_ + root.GetFloat("angleVariance");
 
-    emitterType_ = (EmitterType2D)root.GetInt("emitterType");
+    duration_ = root.GetFloat("duration");
+
+    // Blend mode
+    int blendFuncSource = root.GetInt("blendFuncSource");
+    int blendFuncDestination = root.GetInt("blendFuncDestination");
+    blendMode_ = BLEND_REPLACE;
+    for (int i = 0; i < MAX_BLENDMODES; ++i)
+    {
+        if (blendFuncSource == p2dSrcBlend[i] && blendFuncDestination == p2dDestBlend[i])
+        {
+            blendMode_ = (BlendMode)i;
+            break;
+        }
+    }
+
+    float r, g, b, a;
+    r = root.GetFloat("startColorRed");
+    g = root.GetFloat("startColorGreen");
+    b = root.GetFloat("startColorBlue");
+    a = root.GetFloat("startColorAlpha");    
+    float rv, gv, bv, av;
+    rv = root.GetFloat("startColorVarianceRed");
+    gv = root.GetFloat("startColorVarianceGreen");
+    bv = root.GetFloat("startColorVarianceBlue");
+    av = root.GetFloat("startColorVarianceAlpha");
+    minStartColor_ = Color(r - rv, g - gv, b - bv, a - av);
+    maxStartColor_ = Color(r + rv, g + gv, b + bv, a + av);
+
+    r = root.GetFloat("finishColorRed");
+    g = root.GetFloat("finishColorGreen");
+    b = root.GetFloat("finishColorBlue");
+    a = root.GetFloat("finishColorAlpha");    
+    rv = root.GetFloat("finishColorVarianceRed");
+    gv = root.GetFloat("finishColorVarianceGreen");
+    bv = root.GetFloat("finishColorVarianceBlue");
+    av = root.GetFloat("finishColorVarianceAlpha");
+    minEndColor_ = Color(r - rv, g - gv, b - bv, a - av);
+    maxEndColor_ = Color(r + rv, g + gv, b + bv, a + av);
+
+    float startParticleSize = root.GetFloat("startParticleSize");
+    float startParticleSizeVariance = root.GetFloat("startParticleSizeVariance");
+    minStartSize_ = startParticleSize - startParticleSizeVariance;
+    maxStartSize_ = startParticleSize + startParticleSizeVariance;
+
+    float endParticleSize = root.GetFloat("finishParticleSize");
+    float endParticleSizeVariance = root.GetFloat("finishParticleSizeVariance");
+    minEndSize_ = endParticleSize - endParticleSizeVariance;
+    maxEndSize_ = endParticleSize + endParticleSizeVariance;
+
+    float posX = root.GetFloat("sourcePositionx");
+    float posY = root.GetFloat("sourcePositiony");
+    float posVarX = root.GetFloat("sourcePositionVariancex");
+    float posVarY = root.GetFloat("sourcePositionVariancey");
+    minPosition_ = Vector2(posX - posVarX, posY - posVarY);
+    maxPosition_ = Vector2(posX + posVarX, posY + posVarY);
+
+    float rotationStart = root.GetFloat("rotationStart");
+    float rotationStartVariance = root.GetFloat("rotationStartVariance");
+    minStartSpin_ = rotationStart - rotationStartVariance;
+    maxStartSpin_ = rotationStart + rotationStartVariance;
+
+    float rotationEnd = root.GetFloat("rotationEnd");
+    float rotationEndVariance = root.GetFloat("rotationEndVariance");
+    minEndSpin_ = rotationEnd + rotationEndVariance;
+    maxEndSpin_ = rotationEnd + rotationEndVariance;
+
+    emitterType_ = (EmitterType2D)(int)root.GetFloat("emitterType");
     if (emitterType_ == ET_GRAVITY)
     {
         gravity_.x_ = root.GetFloat("gravityx");
         gravity_.y_ = root.GetFloat("gravityy");
 
-        float radialAccel = root.GetFloat("radialAcceleration");
-        float radialAccelVar = root.GetFloat("radialAccelVariance");
-        minRadialAcceleration_ = radialAccel - radialAccelVar;
-        maxRadialAcceleration_ = radialAccel + radialAccelVar;
+        float speed = root.GetFloat("speed");
+        float speedVariance = root.GetFloat("speedVariance");
+        minSpeed_ = speed - speedVariance;
+        maxSpeed_ = speed + speedVariance;
 
-        float tangentialAccel= root.GetFloat("tangentialAcceleration");
-        float tangentialAccelVar = root.GetFloat("tangentialAccelVariance");
-        minTangentialAcceleration_ = tangentialAccel - tangentialAccelVar;
-        maxTangentialAcceleration_ = tangentialAccel + tangentialAccelVar;
+        float radialAcceleration = root.GetFloat("radialAcceleration");
+        float radialAccelVariance = root.GetFloat("radialAccelVariance");
+        minRadialAcceleration_ = radialAcceleration - radialAccelVariance;
+        maxRadialAcceleration_ = radialAcceleration + radialAccelVariance;
+
+        float tangentialAcceleration = root.GetFloat("tangentialAcceleration");
+        float tangentialAccelVariance = root.GetFloat("tangentialAccelVariance");
+        minTangentialAcceleration_ = tangentialAcceleration - tangentialAccelVariance;
+        maxTangentialAcceleration_ = tangentialAcceleration + tangentialAccelVariance;
     }
     else
     {
-        float rotatePerSecond = root.GetFloat("rotatePerSecond");
-        float rotatePerSecondVar = root.GetFloat("rotatePerSecondVariance");
-        minRotatePerSecond_ = rotatePerSecond - rotatePerSecondVar;
-        maxRotatePerSecond_ = rotatePerSecond + rotatePerSecondVar;
-        
-        float startRadius = root.GetFloat("maxRadius");
-        float startRadiusVar = root.GetFloat("maxRadiusVariance");
-        minStartRadius_ = startRadius - startRadiusVar;
-        maxStartRadius_ = startRadius + startRadiusVar;
+        minStartRadius_ = root.GetFloat("maxRadius");
+        maxStartRadius_ = minStartRadius_ + root.GetFloat("maxRadiusVariance");
 
         minEndRadius_ = maxEndRadius_ = root.GetFloat("minRadius");
+
+        minRotatePerSecond_ = root.GetFloat("rotatePerSecond");
+        maxRotatePerSecond_ = minRotatePerSecond_ + root.GetFloat("rotatePerSecondVariance");
     }
 
-    // Blend mode
-    int blendFuncSource = root.GetInt("blendFuncSource");
-    int blendFuncDestination = root.GetInt("blendFuncDestination");
-    if (false)
-        blendMode_ = BLEND_ALPHA;
-    else
-        blendMode_ = BLEND_ADDALPHA;
+    float particleLifespan = root.GetFloat("particleLifespan");
+    float particleLifespanVariance = root.GetFloat("particleLifespanVariance");
+    minParticleLifespan_ = particleLifespan - particleLifespanVariance;
+    maxParticleLifespan_ = particleLifespan + particleLifespanVariance;
+
+    emissionRate_ = maxParticles / particleLifespan;
 
     String textureFileName = root.GetString("textureFileName");
-    Texture* texture = cache->GetResource<Texture>(textureFileName);
+    Texture2D* texture = cache->GetResource<Texture2D>(textureFileName);
     if (!texture)
         return false;
     SetTexture(texture);
-
-    Vector2 position;
-    position.x_ = root.GetFloat("sourcePositionx");
-    position.y_ = root.GetFloat("sourcePositiony");
-    Vector2 positionVar;
-    positionVar.x_ = root.GetFloat("sourcePositionVariancex");
-    positionVar.y_ = root.GetFloat("sourcePositionVariancey");
-    minPosition_ = position - positionVar;
-    maxPosition_ = position + positionVar;
-
-    float angle = root.GetFloat("angle");
-    float angleVar = root.GetFloat("angleVariance");
-    minAngle_ = angle - angleVar;
-    maxAngle_ = angle + angleVar;
-    float speed = root.GetFloat("speed");
-    float speedVar = root.GetFloat("speedVariance");
-    minSpeed_ = speed - speedVar;
-    maxSpeed_ = speed + speedVar;
-
-    Color startColor;
-    startColor.r_ = root.GetFloat("startColorRed");
-    startColor.g_ = root.GetFloat("startColorGreen");
-    startColor.b_ = root.GetFloat("startColorBlue");
-    startColor.a_ = root.GetFloat("startColorAlpha");
-    Color startColorVar;
-    startColorVar.r_ = root.GetFloat("startColorVarianceRed");
-    startColorVar.g_ = root.GetFloat("startColorVarianceGreen");
-    startColorVar.b_ = root.GetFloat("startColorVarianceBlue");
-    startColorVar.a_ = root.GetFloat("startColorVarianceAlpha");
-    minStartColor_ = Color(startColor.r_ - startColorVar.r_, startColor.g_ - startColorVar.g_, startColor.b_ - startColorVar.b_, startColor.a_ - startColorVar.a_);
-    maxStartColor_ = Color(startColor.r_ + startColorVar.r_, startColor.g_ + startColorVar.g_, startColor.b_ + startColorVar.b_, startColor.a_ + startColorVar.a_);
-
-    Color endColor;
-    endColor.r_ = root.GetFloat("endColorRed");
-    endColor.g_ = root.GetFloat("endColorGreen");
-    endColor.b_ = root.GetFloat("endColorBlue");
-    endColor.a_ = root.GetFloat("endColorAlpha");
-    Color endColorVar;
-    endColorVar.r_ = root.GetFloat("endColorVarianceRed");    
-    endColorVar.g_ = root.GetFloat("endColorVarianceGreen");
-    endColorVar.b_ = root.GetFloat("endColorVarianceBlue");
-    endColorVar.a_ = root.GetFloat("endColorVarianceAlpha");
-    minEndColor_ = Color(endColor.r_ - endColorVar.r_, endColor.g_ - endColorVar.g_, endColor.b_ - endColorVar.b_, endColor.a_ - endColorVar.a_);
-    maxEndColor_ = Color(endColor.r_ + endColorVar.r_, endColor.g_ + endColorVar.g_, endColor.b_ + endColorVar.b_, endColor.a_ + endColorVar.a_);
-
-    float startParticleSize = root.GetFloat("startParticleSize");
-    float startParticleSizeVar = root.GetFloat("startParticleSizeVariance");
-    minStartSize_ = startParticleSize - startParticleSizeVar;
-    maxStartSize_ = startParticleSize + startParticleSizeVar;
-    
-    float endParticleSize = root.GetFloat("endParticleSize");
-    float endParticleSizeVar = root.GetFloat("endParticleSizeVariance");
-    minEndSize_ = endParticleSize - endParticleSizeVar;
-    maxEndSize_ = endParticleSize + endParticleSizeVar;
-
-    float startSpin = root.GetFloat("rotationStart");
-    float startSpinVar = root.GetFloat("rotationStartVariance");
-    minStartSpin_ = startSpin - startSpinVar;
-    maxStartSpin_ = startSpin + startSpinVar;
-    
-    float endSpin = root.GetFloat("rotationEnd");
-    float endSpinVar = root.GetFloat("rotationEndVariance");
-    minEndSpin_ = endSpin - endSpinVar;
-    maxEndSpin_ = endSpin + endSpinVar;
 
     return true;
 }
@@ -503,20 +548,19 @@ void ParticleEmitter2D::UpdateVertices()
     for (int i = 0; i < particles_.Size(); ++i)
     {
         Particle2D& p = particles_[i];
-        float width = p.size_* 10;
-        float height = p.size_* 10;
 
-        float hotSpotX = flipX_ ? (1.0f - hotSpot_.x_) : hotSpot_.x_;
-        float hotSpotY = flipY_ ? (1.0f - hotSpot_.y_) : hotSpot_.y_;
-        float leftX = -width * hotSpotX;
-        float bottomY = -height * hotSpotY;
+        float width = p.size_;
+        float height = p.size_;
+
+        float leftX = -width * 0.5f;
+        float bottomY = -height * 0.5f;
+
         vertex0.position_ = Vector3(p.position_.x_ + leftX, p.position_.y_ + bottomY, 0.0f);
         vertex1.position_ = Vector3(p.position_.x_ + leftX, p.position_.y_ + bottomY + height, 0.0f);
         vertex2.position_ = Vector3(p.position_.x_ + leftX + width, p.position_.y_ + bottomY + height, 0.0f);
         vertex3.position_ = Vector3(p.position_.x_ + leftX + width, p.position_.y_ + bottomY, 0.0f);
 
         vertex0.color_ = vertex1.color_ = vertex2.color_  = vertex3.color_ = p.color_.ToUInt();
-
 
         vertices_.Push(vertex0);
         vertices_.Push(vertex1);
@@ -529,49 +573,116 @@ void ParticleEmitter2D::UpdateVertices()
 
     verticesDirty_ = false;
     geometryDirty_ = true;
-
-
 }
 
 
 void ParticleEmitter2D::EmitNewParticle()
 {
-    Particle2D particle;
+    particles_.Resize(particles_.Size() + 1);
+    Particle2D& particle = particles_.Back();
+
     particle.timeToLive_ = Lerp(minParticleLifespan_, maxParticleLifespan_, Random(1.0f));
+    particle.timeToLive_ = Max(particle.timeToLive_, 0.01f);
     float invTimeToLive = 1.0f / particle.timeToLive_;
 
+    particle.position_.x_ = Lerp(minPosition_.x_, maxPosition_.x_, Random(1.0f));
+    particle.position_.y_ = Lerp(minPosition_.y_, maxPosition_.y_, Random(1.0f));
+
+    particle.color_.r_ = Lerp(minStartColor_.r_, maxStartColor_.r_, Random(1.0f));
+    particle.color_.g_ = Lerp(minStartColor_.g_, maxStartColor_.g_, Random(1.0f));
+    particle.color_.b_ = Lerp(minStartColor_.b_, maxStartColor_.b_, Random(1.0f));
+    particle.color_.a_ = Lerp(minStartColor_.a_, maxStartColor_.a_, Random(1.0f));
+    particle.color_.Clip(true);
+
+    Color endColor;
+    endColor.r_ = Lerp(minEndColor_.r_, maxEndColor_.r_, Random(1.0f));
+    endColor.g_ = Lerp(minEndColor_.g_, maxEndColor_.g_, Random(1.0f));
+    endColor.b_ = Lerp(minEndColor_.b_, maxEndColor_.b_, Random(1.0f));
+    endColor.a_ = Lerp(minEndColor_.a_, maxEndColor_.a_, Random(1.0f));
+    endColor.Clip(true);
+
+    particle.colorDelta_.r_ = (endColor.r_ - particle.color_.r_) * invTimeToLive;
+    particle.colorDelta_.g_ = (endColor.g_ - particle.color_.g_) * invTimeToLive;
+    particle.colorDelta_.b_ = (endColor.b_ - particle.color_.b_) * invTimeToLive;
+    particle.colorDelta_.a_ = (endColor.a_ - particle.color_.a_) * invTimeToLive;
+
+    particle.size_ = Lerp(minStartSize_, maxStartSize_, Random(1.0f));
+    particle.size_ = Max(particle.size_, 0.0f);
+    float endSize = Lerp(minEndSize_, maxEndSize_, Random(1.0f));
+    endSize = Max(endSize, 0.0f);
+    particle.sizeDelta_ = (endSize - particle.size_) * invTimeToLive;
+
+    particle.rotation_ = Lerp(minStartSpin_, maxStartSize_, Random(1.0f));
+    float endRotation = Lerp(minEndSpin_, maxEndSpin_, Random(1.0f));
+    particle.rotationDelta_ = (endRotation - particle.rotation_) * invTimeToLive;
+
+    // ?
     Vector3 worldPosition = GetNode()->GetWorldPosition();
-    particle.startPos_ = particle.position_ = Vector2(worldPosition.x_, worldPosition.y_);
+    particle.startPos_ = Vector2(worldPosition.x_, worldPosition.y_);
+
+    float angle = Lerp(minAngle_, maxAngle_, Random(1.0f));
 
     if (emitterType_ == ET_GRAVITY)
     {
-        particle.gravityX_ = gravity_.x_;
-        particle.gravityY_ = gravity_.y_;
+        Vector2 dir(Cos(angle), Sin(angle));
+        float speed = Lerp(minSpeed_, maxSpeed_, Random(1.0f));
+        particle.velocityX_ = dir.x_ * speed;
+        particle.velocityY_ = dir.y_ * speed;
         particle.radialAccel_ = Lerp(minRadialAcceleration_, maxRadialAcceleration_, Random(1.0f));
         particle.tangentialAccel_ = Lerp(minTangentialAcceleration_, maxTangentialAcceleration_, Random(1.0f));
     }
     else
     {
-        particle.angle_ = Lerp(0.0f, 360.0f, Random(1.0f));
-        particle.angleDelta_ = Lerp(minRotatePerSecond_, maxRotatePerSecond_, Random(1.0f));
         particle.radius_ = Lerp(minStartRadius_, maxStartRadius_, Random(1.0f));
-        particle.radiusDelta_ = Lerp(minEndRadius_, maxEndRadius_, Random(1.0f));
-        particle.radiusDelta_ = (particle.radiusDelta_ - particle.radius_) * invTimeToLive;
+        float endRadius = Lerp(minEndRadius_, maxEndRadius_, Random(1.0f));
+        particle.radiusDelta_ = (endRadius - particle.radius_) * invTimeToLive;
+        particle.angle_ = angle;
+        particle.degreesPerSecond_ = Lerp(minRotatePerSecond_, maxRotatePerSecond_, Random(1.0f));
     }
+}
 
-    particle.color_ = minStartColor_.Lerp(maxStartColor_, Random(1.0f));
-    Color endColor = minEndColor_.Lerp(maxEndColor_, Random(1.0f));
-    particle.colorDelta_ = Color(endColor.r_ - particle.color_.r_, endColor.g_ - particle.color_.g_, endColor.b_ - particle.color_.b_, endColor.a_ - particle.color_.a_) * invTimeToLive;
+void ParticleEmitter2D::HandleScenePostUpdate(StringHash eventType, VariantMap& eventData)
+{
+    // Store scene's timestep and use it instead of global timestep, as time scale may be other than 1
+    using namespace ScenePostUpdate;
 
-    particle.size_ = Lerp(minStartSize_, maxStartSize_, Random(1.0f));
-    particle.sizeDelta_ = Lerp(minEndSize_, maxEndSize_, Random(1.0f));
-    particle.sizeDelta_ = (particle.sizeDelta_ - particle.size_) * invTimeToLive;
+    // lastTimeStep_ = eventData[P_TIMESTEP].GetFloat();
 
-    particle.spin_ = Lerp(minStartSpin_, maxStartSpin_, Random(1.0f));
-    particle.spinDelta_ = Lerp(minEndSpin_, maxEndSpin_, Random(1.0f));
-    particle.spinDelta_ = (particle.spinDelta_ - particle.spin_) * invTimeToLive;
+    // If no invisible update, check that the billboardset is in view (framenumber has changed)
+    //if (updateInvisible_ || viewFrameNumber_ != lastUpdateFrameNumber_)
+    //{
+    //    lastUpdateFrameNumber_ = viewFrameNumber_;
+    //    needUpdate_ = true;
+    //    MarkForUpdate();
+    //}
 
-    particles_.Push(particle);
+    MarkForUpdate();
+}
+
+void ParticleEmitter2D::OnSetEnabled()
+{
+    Sprite2D::OnSetEnabled();
+
+    Scene* scene = GetScene();
+    if (scene)
+    {
+        if (IsEnabledEffective())
+            SubscribeToEvent(scene, E_SCENEPOSTUPDATE, HANDLER(ParticleEmitter2D, HandleScenePostUpdate));
+        else
+            UnsubscribeFromEvent(scene, E_SCENEPOSTUPDATE);
+    }
+}
+
+void ParticleEmitter2D::OnNodeSet(Node* node)
+{
+    Sprite2D::OnNodeSet(node);
+
+    if (node)
+    {
+        Scene* scene = GetScene();
+        if (scene && IsEnabledEffective())
+            SubscribeToEvent(scene, E_SCENEPOSTUPDATE, HANDLER(ParticleEmitter2D, HandleScenePostUpdate));
+    }
 }
 
 }

@@ -168,11 +168,45 @@ const PLArray& PLArray::ToArray() const
     return *this;
 }
 
-const PLNode& PLArray::Get(unsigned index) const
+bool PLArray::GetBool(unsigned index, bool defValue) const
 {
     if (index < Size())
-        return *At(index);
-    return PLValue::EMPTY;
+        return At(index)->GetBool();
+    return defValue;
+}
+
+float PLArray::GetFloat(unsigned index, float defValue) const
+{
+    if (index < Size())
+        return At(index)->GetFloat();
+    return defValue;
+}
+int PLArray::GetInt(unsigned index, int defValue) const
+{
+    if (index < Size())
+        return At(index)->GetInt();
+    return defValue;
+}
+
+const String& PLArray::GetString(unsigned index, const String& defValue /*= ""*/) const
+{
+    if (index < Size())
+        return At(index)->GetString();
+    return defValue;
+}
+
+const PLArray& PLArray::GetArray(unsigned index) const
+{
+    if (index < Size())
+        return At(index)->ToArray();
+    return PLArray::EMPTY;
+}
+
+const PLDictionary& PLArray::GetDictionary(unsigned index) const
+{
+    if (index < Size())
+        return At(index)->ToDictionary();
+    return PLDictionary::EMPTY;
 }
 
 PLDictionary::PLDictionary() : PLNode(NT_DICTIONARY)
@@ -191,12 +225,52 @@ const PLDictionary& PLDictionary::ToDictionary() const
     return *this;
 }
 
-const PLNode& PLDictionary::Get(const String& key) const
+bool PLDictionary::GetBool(const String& key, bool defValue) const
 {
     ConstIterator i = Find(key);
     if (i != End())
-        return *(i->second_);
-    return PLValue::EMPTY;
+        return i->second_->GetBool();
+    return defValue;
+}
+
+float PLDictionary::GetFloat(const String& key, float defValue) const
+{
+    ConstIterator i = Find(key);
+    if (i != End())
+        return i->second_->GetFloat();
+    return defValue;
+}
+
+int PLDictionary::GetInt(const String& key, int defValue) const
+{
+    ConstIterator i = Find(key);
+    if (i != End())
+        return i->second_->GetInt();
+    return defValue;
+}
+
+const String& PLDictionary::GetString(const String& key, const String& defValue) const
+{
+    ConstIterator i = Find(key);
+    if (i != End())
+        return i->second_->GetString();
+    return defValue;
+}
+
+const PLArray& PLDictionary::GetArray(const String& key) const
+{
+    ConstIterator i = Find(key);
+    if (i != End())
+        return i->second_->ToArray();
+    return PLArray::EMPTY;
+}
+
+const PLDictionary& PLDictionary::GetDictionary(const String& key) const
+{
+    ConstIterator i = Find(key);
+    if (i != End())
+        return i->second_->ToDictionary();
+    return PLDictionary::EMPTY;
 }
 
 PropertyList::PropertyList(Context* context) : Resource(context),

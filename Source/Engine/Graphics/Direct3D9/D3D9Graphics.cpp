@@ -37,6 +37,7 @@
 #include "Material.h"
 #include "Octree.h"
 #include "ParticleEmitter.h"
+#include "ParticleEmitter2D.h"
 #include "ProcessUtils.h"
 #include "Profiler.h"
 #include "Shader.h"
@@ -2531,6 +2532,7 @@ void RegisterGraphicsLibrary(Context* context)
     AnimationController::RegisterObject(context);
     BillboardSet::RegisterObject(context);
     ParticleEmitter::RegisterObject(context);
+    ParticleEmitter2D::RegisterObject(context);
     CustomGeometry::RegisterObject(context);
     DecalSet::RegisterObject(context);
     Terrain::RegisterObject(context);

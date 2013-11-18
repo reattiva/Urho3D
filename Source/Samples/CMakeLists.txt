@@ -60,3 +60,4 @@ if (ENABLE_LUA)
 endif ()
 
 add_subdirectory (23_Sprite2DDemo)
+add_subdirectory (24_Particle2DDemo)

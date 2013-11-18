@@ -115,20 +115,18 @@ public:
     /// To array.
     virtual const PLArray& ToArray() const;
 
-    /// Return PLNode.
-    const PLNode& Get(unsigned index) const;
     /// Return bool.
-    bool GetBool(unsigned index) const { return Get(index).GetBool(); }
+    bool GetBool(unsigned index, bool defValue = false) const;
     /// Return float.
-    float GetFloat(unsigned index) const { return Get(index).GetFloat(); }
+    float GetFloat(unsigned index, float defValue = 0.0f) const;
     /// Return int.
-    int GetInt(unsigned index) const { return Get(index).GetInt(); }
+    int GetInt(unsigned index, int defValue = 0) const;
     /// Return string.
-    const String& GetString(unsigned index) const { return Get(index).GetString(); }
+    const String& GetString(unsigned index, const String& defValue = "") const;
     /// Return array.
-    const PLArray& GetArray(unsigned index) const { return Get(index).ToArray(); }
+    const PLArray& GetArray(unsigned index) const;
     /// Return dictionary.
-    const PLDictionary& GetDictionary(unsigned index) const { return Get(index).ToDictionary(); }
+    const PLDictionary& GetDictionary(unsigned index) const;
 
     /// Empty array.
     static const PLArray EMPTY;
@@ -143,20 +141,18 @@ public:
     /// To dictionary.
     virtual const PLDictionary& ToDictionary() const;
 
-    /// Return PLNode by key.
-    const PLNode& Get(const String& key) const;
     /// Return bool.
-    bool GetBool(const String& key) const { return Get(key).GetBool(); }
+    bool GetBool(const String& key, bool defValue = false) const;
     /// Return float.
-    float GetFloat(const String& key) const { return Get(key).GetFloat(); }
+    float GetFloat(const String& key, float defValue = 0.0f) const;
     /// Return int.
-    int GetInt(const String& key) const { return Get(key).GetInt(); }
+    int GetInt(const String& key, int defValue = 0) const;
     /// Return string.
-    const String& GetString(const String& key) const { return Get(key).GetString(); }
+    const String& GetString(const String& key, const String& defValue = "") const;
     /// Return array.
-    const PLArray& GetArray(const String& key) const { return Get(key).ToArray(); }
+    const PLArray& GetArray(const String& key) const;
     /// Return dictionary.
-    const PLDictionary& GetDictionary(const String& key) const { return Get(key).ToDictionary(); }
+    const PLDictionary& GetDictionary(const String& key) const;
 
     /// Empty dictionary.
     static const PLDictionary EMPTY;
