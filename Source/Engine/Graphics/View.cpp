@@ -1488,28 +1488,20 @@ void View::SetTextures(RenderPathCommand& command)
         }
         
         // Bind a texture from the resource system
+        Texture* texture;
+
         // Detect 3d textures by file extension: they are defined by an XML file
         if (GetExtension(command.textureNames_[i]) == ".xml")
-        {
-            Texture3D* texture = cache->GetResource<Texture3D>(command.textureNames_[i]);
-            if (texture)
-                graphics_->SetTexture(i, texture);
-            else
-            {
-                // If requesting a texture fails, clear the texture name to prevent redundant attempts
-                command.textureNames_[i] = String::EMPTY;
-            }
-        }
+            texture = cache->GetResource<Texture3D>(command.textureNames_[i]);
+        else
+            texture = cache->GetResource<Texture2D>(command.textureNames_[i]);
+
+        if (texture)
+            graphics_->SetTexture(i, texture);
         else
         {
-            Texture2D* texture = cache->GetResource<Texture2D>(command.textureNames_[i]);
-            if (texture)
-                graphics_->SetTexture(i, texture);
-            else
-            {
-                // If requesting a texture fails, clear the texture name to prevent redundant attempts
-                command.textureNames_[i] = String::EMPTY;
-            }
+            // If requesting a texture fails, clear the texture name to prevent redundant attempts
+            command.textureNames_[i] = String::EMPTY;
         }
     }
 }
@@ -1531,8 +1523,12 @@ void View::RenderQuad(RenderPathCommand& command)
     for (HashMap<StringHash, Variant>::ConstIterator k = parameters.Begin(); k != parameters.End(); ++k)
         graphics_->SetShaderParameter(k->first_, k->second_);
 
-    graphics_->SetShaderParameter(VSP_NEARCLIP, camera_->GetNearClip());
-    graphics_->SetShaderParameter(VSP_FARCLIP, camera_->GetFarClip());
+    float nearClip = camera_->GetNearClip();
+    float farClip = camera_->GetFarClip();
+    graphics_->SetShaderParameter(VSP_NEARCLIP, nearClip);
+    graphics_->SetShaderParameter(VSP_FARCLIP, farClip);
+    graphics_->SetShaderParameter(PSP_NEARCLIP, nearClip);
+    graphics_->SetShaderParameter(PSP_FARCLIP, farClip);
     
     float rtWidth = (float)rtSize_.x_;
     float rtHeight = (float)rtSize_.y_;

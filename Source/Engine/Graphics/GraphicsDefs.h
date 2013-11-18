@@ -229,6 +229,8 @@ extern StringHash PSP_MATDIFFCOLOR;
 extern StringHash PSP_MATEMISSIVECOLOR;
 extern StringHash PSP_MATENVMAPCOLOR;
 extern StringHash PSP_MATSPECCOLOR;
+extern StringHash PSP_NEARCLIP;
+extern StringHash PSP_FARCLIP;
 extern StringHash PSP_SHADOWCUBEADJUST;
 extern StringHash PSP_SHADOWDEPTHFADE;
 extern StringHash PSP_SHADOWINTENSITY;

@@ -38,6 +38,8 @@ uniform float4 cMatDiffColor;
 uniform float3 cMatEmissiveColor;
 uniform float3 cMatEnvMapColor;
 uniform float4 cMatSpecColor;
+uniform float cNearClipPS;
+uniform float cFarClipPS;
 uniform float4 cShadowCubeAdjust;
 uniform float4 cShadowDepthFade;
 uniform float2 cShadowIntensity;

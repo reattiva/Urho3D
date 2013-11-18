@@ -62,6 +62,8 @@ StringHash PSP_MATDIFFCOLOR("MatDiffColor");
 StringHash PSP_MATEMISSIVECOLOR("MatEmissiveColor");
 StringHash PSP_MATENVMAPECOLOR("MatEnvMapColor");
 StringHash PSP_MATSPECCOLOR("MatSpecColor");
+StringHash PSP_NEARCLIP("NearClipPS");
+StringHash PSP_FARCLIP("FarClipPS");
 StringHash PSP_SHADOWCUBEADJUST("ShadowCubeAdjust");
 StringHash PSP_SHADOWDEPTHFADE("ShadowDepthFade");
 StringHash PSP_SHADOWINTENSITY("ShadowIntensity");
