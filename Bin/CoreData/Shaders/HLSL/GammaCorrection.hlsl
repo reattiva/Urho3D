@@ -18,5 +18,5 @@ void PS(float2 iScreenPos : TEXCOORD0,
     out float4 oColor : COLOR0)
 {
     float3 color = tex2D(sDiffMap, iScreenPos).rgb;
-    oColor = float4(ColorCorrection(color, sVolumeMap), 1.0);
+    oColor = float4(ToInverseGamma(color), 1.0);
 }

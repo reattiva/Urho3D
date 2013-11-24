@@ -5,20 +5,20 @@
 #include "PostProcess.hlsl"
 
 uniform float cBloomHDRThreshold;
-uniform float cBloomHDRBlurSigma;
-uniform float cBloomHDRBlurScale;
 uniform float2 cBloomHDRBlurDir;
+uniform float cBloomHDRBlurRadius;
+uniform float cBloomHDRBlurSigma;
 uniform float2 cBloomHDRMix;
-
 uniform float2 cBright2Offsets;
 uniform float2 cBright4Offsets;
 uniform float2 cBright8Offsets;
 uniform float2 cBright16Offsets;
-
 uniform float2 cBright2InvSize;
 uniform float2 cBright4InvSize;
 uniform float2 cBright8InvSize;
 uniform float2 cBright16InvSize;
+
+static const int BlurKernelSize = 5;
 
 void VS(float4 iPos : POSITION,
     out float4 oPos : POSITION,
@@ -71,40 +71,41 @@ void PS(float2 iTexCoord : TEXCOORD0,
     out float4 oColor : COLOR0)
 {
     #ifdef BRIGHT
-    float3 rgb = tex2D(sDiffMap, iScreenPos).rgb;
-    float3 rgbt = float3(cBloomHDRThreshold, cBloomHDRThreshold, cBloomHDRThreshold);
-    oColor = float4(max(rgb - rgbt, 0.0), 1.0) / (1.0 - cBloomHDRThreshold);
-    #endif
-
-    #ifdef BLUR2
-    oColor = GaussianBlur(5, cBloomHDRBlurSigma, cBloomHDRBlurDir, cBright2InvSize * cBloomHDRBlurScale, sDiffMap, iTexCoord);
-    #endif
-
-    #ifdef BLUR4
-    oColor = GaussianBlur(5, cBloomHDRBlurSigma, cBloomHDRBlurDir, cBright4InvSize * cBloomHDRBlurScale, sDiffMap, iTexCoord);
-    #endif
-
-    #ifdef BLUR8
-    oColor = GaussianBlur(5, cBloomHDRBlurSigma, cBloomHDRBlurDir, cBright8InvSize * cBloomHDRBlurScale, sDiffMap, iTexCoord);
+    float3 color = tex2D(sDiffMap, iScreenPos).rgb;
+    oColor = float4(max(color - cBloomHDRThreshold, 0.0), 1.0);
     #endif
 
     #ifdef BLUR16
-    oColor = GaussianBlur(5, cBloomHDRBlurSigma, cBloomHDRBlurDir, cBright16InvSize * cBloomHDRBlurScale, sDiffMap, iTexCoord);
+    oColor = GaussianBlur(BlurKernelSize, cBloomHDRBlurDir, cBright16InvSize * cBloomHDRBlurRadius, cBloomHDRBlurSigma, sDiffMap, iTexCoord);
     #endif
 
-    #ifdef COMBINE2
-    oColor = float4(CombineColors(tex2D(sDiffMap, iScreenPos).rgb, tex2D(sNormalMap, iTexCoord).rgb, cBloomHDRMix), 1.0);
+    #ifdef BLUR8
+    oColor = GaussianBlur(BlurKernelSize, cBloomHDRBlurDir, cBright8InvSize * cBloomHDRBlurRadius, cBloomHDRBlurSigma, sDiffMap, iTexCoord);
     #endif
 
-    #ifdef COMBINE4
-    oColor = float4(CombineColors(tex2D(sDiffMap, iScreenPos).rgb, tex2D(sNormalMap, iTexCoord).rgb, cBloomHDRMix), 1.0);
+    #ifdef BLUR4
+    oColor = GaussianBlur(BlurKernelSize, cBloomHDRBlurDir, cBright4InvSize * cBloomHDRBlurRadius, cBloomHDRBlurSigma, sDiffMap, iTexCoord);
     #endif
 
-    #ifdef COMBINE8
-    oColor = float4(CombineColors(tex2D(sDiffMap, iScreenPos).rgb, tex2D(sNormalMap, iTexCoord).rgb, cBloomHDRMix), 1.0);
+    #ifdef BLUR2
+    oColor = GaussianBlur(BlurKernelSize, cBloomHDRBlurDir, cBright2InvSize * cBloomHDRBlurRadius, cBloomHDRBlurSigma, sDiffMap, iTexCoord);
     #endif
 
     #ifdef COMBINE16
-    oColor = float4(CombineColors(tex2D(sDiffMap, iScreenPos).rgb, tex2D(sNormalMap, iTexCoord).rgb, cBloomHDRMix), 1.0);
+    oColor = tex2D(sDiffMap, iScreenPos) + tex2D(sNormalMap, iTexCoord);
+    #endif
+
+    #ifdef COMBINE8
+    oColor = tex2D(sDiffMap, iScreenPos) + tex2D(sNormalMap, iTexCoord);
+    #endif
+
+    #ifdef COMBINE4
+    oColor = tex2D(sDiffMap, iScreenPos) + tex2D(sNormalMap, iTexCoord);
+    #endif
+
+    #ifdef COMBINE2
+    float3 color = tex2D(sDiffMap, iScreenPos).rgb * cBloomHDRMix.x;
+    float3 bloom = tex2D(sNormalMap, iTexCoord).rgb * cBloomHDRMix.y;
+    oColor = float4(color + bloom, 1.0);
     #endif
 }

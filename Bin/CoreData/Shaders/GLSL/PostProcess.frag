@@ -1,49 +1,65 @@
 
-const float pi = 3.14159265;
+const float PI = 3.14159265;
 
 vec2 Noise(vec2 coord)
 {
     float noiseX = clamp(fract(sin(dot(coord, vec2(12.9898, 78.233))) * 43758.5453), 0.0, 1.0);
     float noiseY = clamp(fract(sin(dot(coord, vec2(12.9898, 78.233) * 2.0)) * 43758.5453), 0.0, 1.0);
-    return vec2(noiseX, noiseY) * 2.0 - 1.0;
+    return vec2(noiseX, noiseY);
 }
 
 // Adapted: http://callumhay.blogspot.com/2010/09/gaussian-blur-shader-glsl.html
-vec4 GaussianBlur(int numSamples, float sigma, vec2 blurDir, vec2 blurSize, sampler2D texSampler, vec2 texCoord)
+vec4 GaussianBlur(int blurKernelSize, vec2 blurDir, vec2 blurRadius, float sigma, sampler2D texSampler, vec2 texCoord)
 {
-    const int numSamplesPerSide = numSamples / 2;
+    const int blurKernelSizeHalfSize = blurKernelSize / 2;
 
     // Incremental Gaussian Coefficent Calculation (See GPU Gems 3 pp. 877 - 889)
-    vec3 incrementalGaussian;
-    incrementalGaussian.x = 1.0 / (sqrt(2.0 * pi) * sigma);
-    incrementalGaussian.y = exp(-0.5 / (sigma * sigma));
-    incrementalGaussian.z = incrementalGaussian.y * incrementalGaussian.y;
+    vec3 gaussCoeff;
+    gaussCoeff.x = 1.0 / (sqrt(2.0 * PI) * sigma);
+    gaussCoeff.y = exp(-0.5 / (sigma * sigma));
+    gaussCoeff.z = gaussCoeff.y * gaussCoeff.y;
 
-    vec4 avgValue = vec4(0.0, 0.0, 0.0, 0.0);
-    float coefficientSum = 0.0;
+    vec2 blurVec = blurRadius * blurDir;
+    vec4 avgValue = vec4(0.0);
+    float gaussCoeffSum = 0.0;
 
-    avgValue += texture2D(texSampler, texCoord) * incrementalGaussian.x;
-    coefficientSum += incrementalGaussian.x;
-    incrementalGaussian.xy *= incrementalGaussian.yz;
+    avgValue += texture2D(texSampler, texCoord) * gaussCoeff.x;
+    gaussCoeffSum += gaussCoeff.x;
+    gaussCoeff.xy *= gaussCoeff.yz;
 
-    for (float i = 1.0; i <= numSamplesPerSide; i++)
+    for (int i = 1; i <= blurKernelSizeHalfSize; i++)
     {
-        avgValue += texture2D(texSampler, texCoord - i * blurSize * blurDir) * incrementalGaussian.x;
-        avgValue += texture2D(texSampler, texCoord + i * blurSize * blurDir) * incrementalGaussian.x;
+        avgValue += texture2D(texSampler, texCoord - i * blurVec) * gaussCoeff.x;
+        avgValue += texture2D(texSampler, texCoord + i * blurVec) * gaussCoeff.x;
 
-        coefficientSum += 2.0 * incrementalGaussian.x;
-        incrementalGaussian.xy *= incrementalGaussian.yz;
+        gaussCoeffSum += 2.0 * gaussCoeff.x;
+        gaussCoeff.xy *= gaussCoeff.yz;
     }
 
-    return avgValue / coefficientSum;
+    return avgValue / gaussCoeffSum;
 }
 
-vec3 ReinhardTonemap(vec3 x)
+const vec3 LumWeights = vec3(0.2126, 0.7152, 0.0722);
+
+vec3 AdjustColorLum(vec3 color, float lum, float middleGrey, float maxWhite)
 {
-    return x / (x + 1.0);
+    float colorLum = 1e-5 + dot(color, LumWeights);
+    float lumScaled = (colorLum * middleGrey) / lum;   
+    float lumCompressed = (lumScaled * (1 + (lumScaled / (maxWhite * maxWhite)))) / (1 + lumScaled);
+    return lumCompressed * color / colorLum;
 }
 
-// Filmic tone mapping (Uncharted2) (See http://filmicgames.com)
+vec3 ReinhardEq3Tonemap(vec3 x)
+{
+    return x / (1.0 + x);
+}
+
+vec3 ReinhardEq4Tonemap(vec3 x, float white)
+{
+    return x * (1.0 + x / white) / (1.0 + x);
+}
+
+// Unchared2 tone mapping (See http://filmicgames.com)
 const float A = 0.15;
 const float B = 0.50;
 const float C = 0.10;
@@ -51,18 +67,9 @@ const float D = 0.20;
 const float E = 0.02;
 const float F = 0.30;
 
-vec3 FilmicTonemap(vec3 x)
+vec3 Uncharted2Tonemap(vec3 x)
 {
-    return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
-}
-
-vec3 CombineColors(vec3 color1, vec3 color2, vec2 colorMix)
-{
-    vec3 rgb1 = color1 * colorMix.x;
-    vec3 rgb2 = color2 * colorMix.y;
-    // Prevent oversaturation
-    rgb1 *= max(vec3(1.0) - rgb2, vec3(0.0));
-    return rgb1 + rgb2;
+   return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
 }
 
 vec3 ColorCorrection(vec3 color, sampler3D lut)
@@ -71,4 +78,17 @@ vec3 ColorCorrection(vec3 color, sampler3D lut)
     float scale = (lutSize - 1.0) / lutSize;
     float offset = 1.0 / (2.0 * lutSize);
     return texture3D(lut, clamp(color, 0.0, 1.0) * scale + offset).rgb;
+}
+
+const float Gamma = 2.2;
+const float InverseGamma = 1.0 / 2.2;
+
+vec3 ToGamma(vec3 color)
+{
+    return vec3(pow(color.r, Gamma), pow(color.g, Gamma), pow(color.b, Gamma));
+}
+
+vec3 ToInverseGamma(vec3 color)
+{
+    return vec3(pow(color.r, InverseGamma), pow(color.g, InverseGamma), pow(color.b, InverseGamma));
 }

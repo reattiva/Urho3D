@@ -7,6 +7,7 @@ uniform float3x3 cCameraRot;
 uniform float cNearClip;
 uniform float cFarClip;
 uniform float4 cDepthMode;
+uniform float cDeltaTime;
 uniform float cElapsedTime;
 uniform float3 cFrustumSize;
 uniform float4 cGBufferOffsets;
@@ -27,6 +28,7 @@ uniform float4x4 cLightMatrices[4];
 
 // Pixel shader uniforms
 uniform float3 cAmbientColor;
+uniform float cDeltaTimePS;
 uniform float cElapsedTimePS;
 uniform float2 cFogParams;
 uniform float3 cFogColor;

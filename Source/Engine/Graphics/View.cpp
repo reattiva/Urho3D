@@ -1523,6 +1523,9 @@ void View::RenderQuad(RenderPathCommand& command)
     for (HashMap<StringHash, Variant>::ConstIterator k = parameters.Begin(); k != parameters.End(); ++k)
         graphics_->SetShaderParameter(k->first_, k->second_);
 
+    graphics_->SetShaderParameter(VSP_DELTATIME, frame_.timeStep_);
+    graphics_->SetShaderParameter(PSP_DELTATIME, frame_.timeStep_);
+
     float nearClip = camera_->GetNearClip();
     float farClip = camera_->GetFarClip();
     graphics_->SetShaderParameter(VSP_NEARCLIP, nearClip);

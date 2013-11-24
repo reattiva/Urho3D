@@ -7,6 +7,7 @@ uniform float cNearClip;
 uniform float cFarClip;
 uniform vec4 cDepthMode;
 uniform vec3 cFrustumSize;
+uniform float cDeltaTime;
 uniform float cElapsedTime;
 uniform vec4 cGBufferOffsets;
 uniform vec3 cLightDir;
