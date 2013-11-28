@@ -807,6 +807,10 @@ static void RegisterZone(asIScriptEngine* engine)
     engine->RegisterObjectMethod("Zone", "float get_fogStart() const", asMETHOD(Zone, GetFogStart), asCALL_THISCALL);
     engine->RegisterObjectMethod("Zone", "void set_fogEnd(float)", asMETHOD(Zone, SetFogEnd), asCALL_THISCALL);
     engine->RegisterObjectMethod("Zone", "float get_fogEnd() const", asMETHOD(Zone, GetFogEnd), asCALL_THISCALL);
+    engine->RegisterObjectMethod("Zone", "void set_fogHeight(float)", asMETHOD(Zone, SetFogHeight), asCALL_THISCALL);
+    engine->RegisterObjectMethod("Zone", "float get_fogHeight() const", asMETHOD(Zone, GetFogHeight), asCALL_THISCALL);
+    engine->RegisterObjectMethod("Zone", "void set_fogHeightScale(float)", asMETHOD(Zone, SetFogHeightScale), asCALL_THISCALL);
+    engine->RegisterObjectMethod("Zone", "float get_fogHeightScale() const", asMETHOD(Zone, GetFogHeightScale), asCALL_THISCALL);
     engine->RegisterObjectMethod("Zone", "void set_priority(int)", asMETHOD(Zone, SetPriority), asCALL_THISCALL);
     engine->RegisterObjectMethod("Zone", "int get_priority() const", asMETHOD(Zone, GetPriority), asCALL_THISCALL);
     engine->RegisterObjectMethod("Zone", "void set_override(bool)", asMETHOD(Zone, SetOverride), asCALL_THISCALL);

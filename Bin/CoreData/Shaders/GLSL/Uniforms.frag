@@ -5,7 +5,7 @@
 uniform vec3 cAmbientColor;
 uniform float cDeltaTimePS;
 uniform float cElapsedTimePS;
-uniform vec2 cFogParams;
+uniform vec4 cFogParams;
 uniform vec3 cFogColor;
 uniform vec2 cGBufferInvSize;
 uniform vec4 cLightColor;

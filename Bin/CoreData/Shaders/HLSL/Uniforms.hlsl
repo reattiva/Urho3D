@@ -30,7 +30,7 @@ uniform float4x4 cLightMatrices[4];
 uniform float3 cAmbientColor;
 uniform float cDeltaTimePS;
 uniform float cElapsedTimePS;
-uniform float2 cFogParams;
+uniform float4 cFogParams;
 uniform float3 cFogColor;
 uniform float2 cGBufferInvSize;
 uniform float4 cLightColor;

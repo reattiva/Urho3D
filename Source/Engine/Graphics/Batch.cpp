@@ -338,10 +338,18 @@ void Batch::Prepare(View* view, bool setModelTransform) const
         float farClip = camera_->GetFarClip();
         float fogStart = Min(zone_->GetFogStart(), farClip);
         float fogEnd = Min(zone_->GetFogEnd(), farClip);
+        float fogHeight = zone_->GetFogHeight();
+        float fogHeightScale = zone_->GetFogHeightScale();
+
         if (fogStart >= fogEnd * (1.0f - M_LARGE_EPSILON))
             fogStart = fogEnd * (1.0f - M_LARGE_EPSILON);
         float fogRange = Max(fogEnd - fogStart, M_EPSILON);
-        Vector4 fogParams(fogEnd / farClip, farClip / fogRange, 0.0f, 0.0f);
+
+        float fogHeightY = box.min_.y_;
+        if (fogHeight < 0.0f)
+            fogHeightY = box.max_.y_;
+        
+        Vector4 fogParams(fogEnd / farClip, farClip / fogRange, fogHeightY + fogHeight, fogHeightScale);
         graphics->SetShaderParameter(PSP_FOGPARAMS, fogParams);
     }
     
