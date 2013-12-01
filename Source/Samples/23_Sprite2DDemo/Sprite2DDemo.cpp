@@ -73,17 +73,17 @@ void Sprite2DDemo::CreateScene()
     camera->SetOrthographic(true);
     camera->SetOrthoSize(Vector2(width, height));
 
-    SpriteSheet* spriteSheet = cache->GetResource<SpriteSheet>("SpriteSheets/Crafts.xml");
+    SpriteSheet* spriteSheet = cache->GetResource<SpriteSheet>("SpriteSheets/spineboy.xml");
     if (!spriteSheet)
         return;
 
-    const Vector<String>& spriteNames = spriteSheet->GetSpriteNames();
+    const Vector<String>& spriteNames = spriteSheet->GetAllSpriteNames();
     for (unsigned i = 0; i < 50; ++i)
     {
         SharedPtr<Node> spriteNode(scene_->CreateChild("Sprite"));
 
         Sprite2D* sprite2D = spriteNode->CreateComponent<Sprite2D>();
-        sprite2D->SetSprite(spriteSheet, spriteNames[i % spriteNames.Size()]);
+        sprite2D->SetSpriteFrame(spriteSheet, spriteNames[i % spriteNames.Size()]);
         sprite2D->SetBlendMode(BLEND_ALPHA);
         
         Vector3 moveSpeed(Random(400.0f) - 200.0f, Random(400.0f) - 200.0f, 0.0f);

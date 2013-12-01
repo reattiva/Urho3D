@@ -76,7 +76,11 @@ void Particle2DDemo::CreateScene()
     SharedPtr<Node> particleNode(scene_->CreateChild("Particle"));
     ParticleEmitter2D* particle = particleNode->CreateComponent<ParticleEmitter2D>();
     particle->Load("Particle2D/LavaFlow.plist");
-    particleNodes.Push(particleNode);
+
+    Vector3 moveSpeed(Random(400.0f) - 200.0f, Random(400.0f) - 200.0f, 0.0f);
+    particleNode->SetVar("MoveSpeed", moveSpeed);
+
+    particleNodes_.Push(particleNode);
 }
 
 void Particle2DDemo::SetupViewport()
@@ -95,5 +99,34 @@ void Particle2DDemo::SubscribeToEvents()
 void Particle2DDemo::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
     using namespace Update;
-    float timeStep = eventData[P_TIMESTEP].GetFloat();
+
+    //Graphics* graphics = GetSubsystem<Graphics>();
+    //float xRange = (float)graphics->GetWidth() / 2.0f;
+    //float yRange = (float)graphics->GetHeight() / 2.0f;
+
+    //// Take the frame time step, which is stored as a float
+    //float timeStep = eventData[P_TIMESTEP].GetFloat();
+
+    //for (unsigned i = 0; i < particleNodes_.Size(); ++i)
+    //{
+    //    SharedPtr<Node> particleNode = particleNodes_[i];
+
+    //    Vector3 moveSpeed = particleNode->GetVar("MoveSpeed").GetVector3();
+    //    Vector3 position = particleNode->GetPosition() + moveSpeed * timeStep;
+    //    if (position.x_ < -xRange || position.x_ > xRange)
+    //    {
+    //        moveSpeed.x_ = -moveSpeed.x_;
+    //        position = particleNode->GetPosition() + moveSpeed * timeStep;
+    //        particleNode->SetVar("MoveSpeed", moveSpeed);
+    //    }
+
+    //    if (position.y_ < -yRange || position.y_ > yRange)
+    //    {
+    //        moveSpeed.y_ = -moveSpeed.y_;
+    //        position = particleNode->GetPosition() + moveSpeed * timeStep;
+    //        particleNode->SetVar("MoveSpeed", moveSpeed);
+    //    }
+
+    //    particleNode->SetPosition(position);
+    //}
 }

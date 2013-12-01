@@ -27,10 +27,44 @@
 namespace Urho3D
 {
 
+class SpriteSheet;
 class Texture;
 class XMLElement;
 
-/// %Sprite sheet resource.
+/// Sprite frame.
+class URHO3D_API SpriteFrame : public RefCounted
+{
+public:
+    /// Construct empty.
+    SpriteFrame();
+    /// Destruct.
+    virtual ~SpriteFrame();
+
+    /// X.
+    int x_;
+    /// Y.
+    int y_;
+    /// Width.
+    int width_;
+    /// Height.
+    int height_;
+
+    /// Rotated.
+    bool rotated_;
+    /// Offset X.
+    int offsetX_;
+    /// Offset Y.
+    int offsetY_;
+    /// Origin with.
+    int originWidth_;
+    /// Origin height.
+    int originHeight_;
+
+    /// Texture.
+    Texture* texture_;
+};
+
+/// %Sprite sheet.
 class URHO3D_API SpriteSheet : public Resource
 {
     OBJECT(SpriteSheet);
@@ -48,22 +82,22 @@ public:
     /// Save resource. Return true if successful.
     virtual bool Save(Serializer& dest) const;
 
-    /// Set texture file name.
-    bool SetTextureFileName(const String& textureFileName);
-    /// Return texture file name.
-    const String& GetTextureFileName() const { return textureFileName_; }
     /// Return texture.
     Texture* GetTexture() const { return texture_; }
+    /// Return sprite frame by sprite name.
+    SpriteFrame* GetSpriteFrame(const String& spriteName) const;
+    /// Return sprite name by sprite frame.
+    const String& GetSpriteName(SpriteFrame* spriteFrame) const;
     /// Return all sprite names.
-    const Vector<String>& GetSpriteNames() const { return spriteNames_; }
-    /// Return sprite texture rectangle.
-    const IntRect& GetSpriteTextureRect(const String& name) const;
+    const Vector<String>& GetAllSpriteNames() const { return spriteNames_; }
 
 private:
     /// Load from sprite sheet file.
     bool LoadSpriteSheet(XMLElement& source);
     /// Load from property list file.
-    bool LoadPropertyList(XMLElement& source);    
+    bool LoadPropertyList(XMLElement& source);
+    /// Set texture file name.
+    bool SetTextureFileName(const String& textureFileName);
 
     /// Texture file name.
     String textureFileName_;
@@ -71,8 +105,8 @@ private:
     SharedPtr<Texture> texture_;
     /// Sprite names.
     Vector<String> spriteNames_;
-    /// Sprite texture rect mapping.
-    HashMap<String, IntRect> spriteTextureRectMapping_;
+    /// Sprite frame mapping.
+    HashMap<String, SharedPtr<SpriteFrame> > spriteFrameMapping_;
 };
 
 }

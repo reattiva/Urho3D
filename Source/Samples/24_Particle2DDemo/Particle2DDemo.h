@@ -57,6 +57,6 @@ private:
     /// Camere node.
     SharedPtr<Node> cameraNode_;
     /// Paticle nodes.
-    Vector<SharedPtr<Node> > particleNodes;
+    Vector<SharedPtr<Node> > particleNodes_;
 };
 
