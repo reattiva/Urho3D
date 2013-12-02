@@ -114,8 +114,8 @@ void Sprite2D::UpdateVertices()
     vertices_.Clear();
 
     Texture* texture = texture_;
-    if (spriteFrame_)
-        texture = spriteFrame_->texture_;
+    if (spriteSheet_)
+        texture = spriteSheet_->GetTexture();
 
     if (!texture)
         return;

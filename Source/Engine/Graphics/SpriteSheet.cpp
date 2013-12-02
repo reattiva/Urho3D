@@ -105,39 +105,28 @@ bool SpriteSheet::Save(Serializer& dest) const
     XMLElement root = xmlFile.CreateRoot("SpriteSheet");
     root.SetString("texture", textureFileName_);
 
-    for (HashMap<String, SharedPtr<SpriteFrame> >::ConstIterator i = spriteFrameMapping_.Begin(); i != spriteFrameMapping_.End(); ++i)
+    for (HashMap<String, SpriteFrame>::ConstIterator i = spriteFrameMapping_.Begin(); i != spriteFrameMapping_.End(); ++i)
     {
         XMLElement spriteElem = root.CreateChild("Sprite");
         spriteElem.SetString("name", i->first_);
 
-        const SharedPtr<SpriteFrame>& spriteFrame = i->second_;
-        spriteElem.SetInt("left", spriteFrame->x_);
-        spriteElem.SetInt("top", spriteFrame->y_);
-        spriteElem.SetInt("right", spriteFrame->width_ + spriteFrame->x_);
-        spriteElem.SetInt("bottom", spriteFrame->height_ + spriteFrame->y_);
+        const SpriteFrame& spriteFrame = i->second_;
+        spriteElem.SetInt("left", spriteFrame.x_);
+        spriteElem.SetInt("top", spriteFrame.y_);
+        spriteElem.SetInt("right", spriteFrame.width_ + spriteFrame.x_);
+        spriteElem.SetInt("bottom", spriteFrame.height_ + spriteFrame.y_);
     }
 
     return xmlFile.Save(dest);
 }
 
-SpriteFrame* SpriteSheet::GetSpriteFrame(const String& spriteName) const
+const SpriteFrame* SpriteSheet::GetSpriteFrame(const String& spriteName) const
 {
-    HashMap<String, SharedPtr<SpriteFrame> >::ConstIterator i = spriteFrameMapping_.Find(spriteName);
+    HashMap<String, SpriteFrame>::ConstIterator i = spriteFrameMapping_.Find(spriteName);
     if (i != spriteFrameMapping_.End())
-        return i->second_;
+        return &i->second_;
 
     return 0;
-}
-
-const String& SpriteSheet::GetSpriteName(SpriteFrame* spriteFrame) const
-{
-    for (HashMap<String, SharedPtr<SpriteFrame> >::ConstIterator i = spriteFrameMapping_.Begin(); i != spriteFrameMapping_.End(); ++i)
-    {
-        if (i->second_ == spriteFrame)
-            return i->first_;
-    }
-
-    return String::EMPTY;
 }
 
 bool SpriteSheet::LoadSpriteSheet(XMLElement& source)
@@ -150,17 +139,16 @@ bool SpriteSheet::LoadSpriteSheet(XMLElement& source)
     {
         String spriteName = spriteElem.GetAttribute("name");
 
-        SharedPtr<SpriteFrame> spriteFrame(new SpriteFrame);
-        spriteFrame->x_ = spriteElem.GetInt("left");
-        spriteFrame->y_ = spriteElem.GetInt("top");
-        spriteFrame->width_ = spriteElem.GetInt("right") - spriteFrame->x_;
-        spriteFrame->height_ = spriteElem.GetInt("bottom") - spriteFrame->y_;
-        spriteFrame->rotated_ = false;
-        spriteFrame->offsetX_ = spriteFrame->offsetY_ = 0;
-        spriteFrame->originWidth_ = spriteFrame->width_;
-        spriteFrame->originHeight_ = spriteFrame->height_;
-        spriteFrame->texture_ = texture_;
-
+        SpriteFrame spriteFrame;
+        spriteFrame.x_ = spriteElem.GetInt("left");
+        spriteFrame.y_ = spriteElem.GetInt("top");
+        spriteFrame.width_ = spriteElem.GetInt("right") - spriteFrame.x_;
+        spriteFrame.height_ = spriteElem.GetInt("bottom") - spriteFrame.y_;
+        spriteFrame.rotated_ = false;
+        spriteFrame.offsetX_ = spriteFrame.offsetY_ = 0;
+        spriteFrame.originWidth_ = spriteFrame.width_;
+        spriteFrame.originHeight_ = spriteFrame.height_;
+        
         spriteNames_.Push(spriteName);
         spriteFrameMapping_[spriteName] = spriteFrame;
 
@@ -197,18 +185,17 @@ bool SpriteSheet::LoadPropertyList(XMLElement& source)
         const PLDictionary& frame = i->second_->ToDictionary();
         IntRect textureRect = PLStringToIntRect(frame.GetString("frame"));
 
-        SharedPtr<SpriteFrame> spriteFrame(new SpriteFrame);
-        spriteFrame->x_ = textureRect.left_;
-        spriteFrame->y_ = textureRect.top_;
-        spriteFrame->width_ = textureRect.right_ - textureRect.left_;
-        spriteFrame->height_ = textureRect.bottom_ - textureRect.top_;
+        SpriteFrame spriteFrame;
+        spriteFrame.x_ = textureRect.left_;
+        spriteFrame.y_ = textureRect.top_;
+        spriteFrame.width_ = textureRect.right_ - textureRect.left_;
+        spriteFrame.height_ = textureRect.bottom_ - textureRect.top_;
         
-        spriteFrame->rotated_ = false;
-        spriteFrame->offsetX_ = spriteFrame->offsetY_ = 0;
-        spriteFrame->originWidth_ = spriteFrame->width_;
-        spriteFrame->originHeight_ = spriteFrame->height_;
-        spriteFrame->texture_ = texture_;
-
+        spriteFrame.rotated_ = false;
+        spriteFrame.offsetX_ = spriteFrame.offsetY_ = 0;
+        spriteFrame.originWidth_ = spriteFrame.width_;
+        spriteFrame.originHeight_ = spriteFrame.height_;
+        
         spriteNames_.Push(spriteName);
         spriteFrameMapping_[spriteName] = spriteFrame;
     }

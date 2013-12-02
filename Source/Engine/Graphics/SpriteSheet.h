@@ -32,7 +32,7 @@ class Texture;
 class XMLElement;
 
 /// Sprite frame.
-class URHO3D_API SpriteFrame : public RefCounted
+class URHO3D_API SpriteFrame
 {
 public:
     /// Construct empty.
@@ -59,9 +59,6 @@ public:
     int originWidth_;
     /// Origin height.
     int originHeight_;
-
-    /// Texture.
-    Texture* texture_;
 };
 
 /// %Sprite sheet.
@@ -85,9 +82,7 @@ public:
     /// Return texture.
     Texture* GetTexture() const { return texture_; }
     /// Return sprite frame by sprite name.
-    SpriteFrame* GetSpriteFrame(const String& spriteName) const;
-    /// Return sprite name by sprite frame.
-    const String& GetSpriteName(SpriteFrame* spriteFrame) const;
+    const SpriteFrame* GetSpriteFrame(const String& spriteName) const;
     /// Return all sprite names.
     const Vector<String>& GetAllSpriteNames() const { return spriteNames_; }
 
@@ -106,7 +101,7 @@ private:
     /// Sprite names.
     Vector<String> spriteNames_;
     /// Sprite frame mapping.
-    HashMap<String, SharedPtr<SpriteFrame> > spriteFrameMapping_;
+    HashMap<String, SpriteFrame> spriteFrameMapping_;
 };
 
 }

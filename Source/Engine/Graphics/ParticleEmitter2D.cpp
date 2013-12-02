@@ -28,6 +28,7 @@
 #include "ResourceCache.h"
 #include "scene.h"
 #include "SceneEvents.h"
+#include "SpriteSheet.h"
 #include "Texture2D.h"
 
 #include "DebugNew.h"
@@ -37,7 +38,7 @@ namespace Urho3D
 
 extern const char* GEOMETRY_CATEGORY;
 
-// Blend function (from OpenGL)
+// Blend function (Copy from OpenGL)
 enum BlendFunction
 {
     BF_ZERO = 0,
@@ -586,7 +587,11 @@ void ParticleEmitter2D::UpdateVertices()
 
     vertices_.Clear();
 
-    if (!texture_)
+    Texture* texture = texture_;
+    if (spriteSheet_)
+        texture = spriteSheet_->GetTexture();
+
+    if (!texture)
         return;
 
     /*
@@ -603,10 +608,28 @@ void ParticleEmitter2D::UpdateVertices()
     Vertex2D vertex2;
     Vertex2D vertex3;
 
-    vertex0.uv_ = Vector2(0.0f, 0.0f);
-    vertex1.uv_ = Vector2(0.0f, 1.0f);
-    vertex2.uv_ = Vector2(1.0f, 1.0f);
-    vertex3.uv_ = Vector2(1.0f, 0.0f);
+    if (spriteFrame_)
+    {
+        float invTexW = 1.0f / texture->GetWidth();
+        float invTexH = 1.0f / texture->GetHeight();
+
+        float leftU = spriteFrame_->x_ * invTexW;
+        float rightU = (spriteFrame_->x_ + spriteFrame_->width_) * invTexW;
+        float bottomV = (spriteFrame_->y_ + spriteFrame_->height_) * invTexH;
+        float topV = spriteFrame_->y_* invTexH;
+
+        vertex0.uv_ = Vector2(leftU, bottomV);
+        vertex1.uv_ = Vector2(leftU, topV);
+        vertex2.uv_ = Vector2(rightU, topV);
+        vertex3.uv_ = Vector2(rightU, bottomV);
+    }
+    else
+    {
+        vertex0.uv_ = Vector2(0.0f, 0.0f);
+        vertex1.uv_ = Vector2(0.0f, 1.0f);
+        vertex2.uv_ = Vector2(1.0f, 1.0f);
+        vertex3.uv_ = Vector2(1.0f, 0.0f);
+    }
 
     for (unsigned i = 0; i < particles_.Size(); ++i)
     {
