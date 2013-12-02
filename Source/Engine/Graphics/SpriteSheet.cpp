@@ -107,14 +107,29 @@ bool SpriteSheet::Save(Serializer& dest) const
 
     for (HashMap<String, SpriteFrame>::ConstIterator i = spriteFrameMapping_.Begin(); i != spriteFrameMapping_.End(); ++i)
     {
-        XMLElement spriteElem = root.CreateChild("Sprite");
+        XMLElement spriteElem = root.CreateChild("SpriteFrame");
         spriteElem.SetString("name", i->first_);
 
         const SpriteFrame& spriteFrame = i->second_;
-        spriteElem.SetInt("left", spriteFrame.x_);
-        spriteElem.SetInt("top", spriteFrame.y_);
-        spriteElem.SetInt("right", spriteFrame.width_ + spriteFrame.x_);
-        spriteElem.SetInt("bottom", spriteFrame.height_ + spriteFrame.y_);
+        spriteElem.SetInt("x", spriteFrame.x_);
+        spriteElem.SetInt("y", spriteFrame.y_);
+        spriteElem.SetInt("width", spriteFrame.width_);
+        spriteElem.SetInt("height", spriteFrame.height_);
+        
+        if (spriteFrame.rotated_)
+            spriteElem.SetBool("rotated", spriteFrame.rotated_);
+        
+        if (spriteFrame.offsetX_ != 0)
+            spriteElem.SetInt("offsetX", spriteFrame.offsetX_);
+        
+        if (spriteFrame.offsetY_ != 0)
+            spriteElem.SetInt("offsetY", spriteFrame.offsetY_);
+
+        if (spriteFrame.originWidth_ != spriteFrame.width_)
+            spriteElem.SetInt("originWidth", spriteFrame.originWidth_);
+
+        if (spriteFrame.originHeight_!= spriteFrame.height_)
+            spriteElem.SetInt("originHeight", spriteFrame.originHeight_);
     }
 
     return xmlFile.Save(dest);
@@ -134,25 +149,38 @@ bool SpriteSheet::LoadSpriteSheet(XMLElement& source)
     if (!SetTextureFileName(source.GetAttribute("texture")))
         return false;
 
-    XMLElement spriteElem = source.GetChild("Sprite");
+    XMLElement spriteElem = source.GetChild("SpriteFrame");
     while (spriteElem)
     {
         String spriteName = spriteElem.GetAttribute("name");
 
         SpriteFrame spriteFrame;
-        spriteFrame.x_ = spriteElem.GetInt("left");
-        spriteFrame.y_ = spriteElem.GetInt("top");
-        spriteFrame.width_ = spriteElem.GetInt("right") - spriteFrame.x_;
-        spriteFrame.height_ = spriteElem.GetInt("bottom") - spriteFrame.y_;
-        spriteFrame.rotated_ = false;
-        spriteFrame.offsetX_ = spriteFrame.offsetY_ = 0;
+        spriteFrame.x_ = spriteElem.GetInt("x");
+        spriteFrame.y_ = spriteElem.GetInt("y");
+        spriteFrame.width_ = spriteElem.GetInt("width");
+        spriteFrame.height_ = spriteElem.GetInt("height");
+
+        if (spriteElem.HasAttribute("rotated"))
+            spriteFrame.rotated_ = spriteElem.GetBool("rotated");
+
+        if (spriteElem.HasAttribute("offsetX"))
+            spriteFrame.offsetX_ = spriteElem.GetInt("offsetX");
+
+        if (spriteElem.HasAttribute("offsetY"))
+            spriteFrame.offsetY_ = spriteElem.GetInt("offsetY");
+
         spriteFrame.originWidth_ = spriteFrame.width_;
+        if (spriteElem.HasAttribute("originWidth"))
+            spriteFrame.originWidth_ = spriteElem.GetInt("originWidth");
+
         spriteFrame.originHeight_ = spriteFrame.height_;
-        
+        if (spriteElem.HasAttribute("originHeight"))
+            spriteFrame.originHeight_ = spriteElem.GetInt("originHeight");
+
         spriteNames_.Push(spriteName);
         spriteFrameMapping_[spriteName] = spriteFrame;
 
-        spriteElem = spriteElem.GetNext("Sprite");
+        spriteElem = spriteElem.GetNext("SpriteFrame");
     }
 
     return true;
@@ -181,21 +209,16 @@ bool SpriteSheet::LoadPropertyList(XMLElement& source)
     for (PLDictionary::ConstIterator i = frames.Begin(); i != frames.End(); ++i)
     {
         String spriteName = i->first_;
-
         const PLDictionary& frame = i->second_->ToDictionary();
-        IntRect textureRect = PLStringToIntRect(frame.GetString("frame"));
 
         SpriteFrame spriteFrame;
-        spriteFrame.x_ = textureRect.left_;
-        spriteFrame.y_ = textureRect.top_;
-        spriteFrame.width_ = textureRect.right_ - textureRect.left_;
-        spriteFrame.height_ = textureRect.bottom_ - textureRect.top_;
-        
-        spriteFrame.rotated_ = false;
-        spriteFrame.offsetX_ = spriteFrame.offsetY_ = 0;
-        spriteFrame.originWidth_ = spriteFrame.width_;
-        spriteFrame.originHeight_ = spriteFrame.height_;
-        
+        PLStringToIntXYWH(frame.GetString("frame"), spriteFrame.x_, spriteFrame.y_, spriteFrame.width_, spriteFrame.height_);
+
+        spriteFrame.rotated_ = frame.GetBool("rotated");
+
+        PLStringToIntXY(frame.GetString("offset"), spriteFrame.offsetX_, spriteFrame.offsetY_);
+        PLStringToIntXY(frame.GetString("sourceSize"), spriteFrame.originWidth_, spriteFrame.originHeight_);
+
         spriteNames_.Push(spriteName);
         spriteFrameMapping_[spriteName] = spriteFrame;
     }

@@ -397,22 +397,14 @@ PLNode* PropertyList::Parse(const XMLElement& element)
     return 0;
 }
 
-URHO3D_API IntRect PLStringToIntRect(const String& string)
+URHO3D_API void PLStringToIntXY(const String& string, int& x, int& y)
 {
-    IntRect result;
-    sscanf(string.CString(), "{{%d,%d},{%d,%d}}", &result.left_, &result.top_, &result.right_, &result.bottom_);
-    result.right_ += result.left_;
-    result.bottom_ += result.top_;
-
-    return result;
+    sscanf(string.CString(), "{%d,%d}", &x, &y);
 }
 
-URHO3D_API IntVector2 PLStringToIntVector2(const String& string)
+URHO3D_API void PLStringToIntXYWH(const String& string, int& x, int& y, int& w, int& h)
 {
-    IntVector2 result;
-    sscanf(string.CString(), "{%d,%d}", &result.x_, &result.y_);
-
-    return result;
+    sscanf(string.CString(), "{{%d,%d},{%d,%d}}", &x, &y, &w, &h);
 }
 
 }

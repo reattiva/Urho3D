@@ -192,6 +192,7 @@ private:
     PLDictionary* root_;
 };
 
-URHO3D_API IntRect PLStringToIntRect(const String& string);
-URHO3D_API IntVector2 PLStringToIntVector2(const String& string);
+URHO3D_API void PLStringToIntXY(const String& string, int& x, int& y);
+URHO3D_API void PLStringToIntXYWH(const String& string, int& x, int& y, int& w, int& h);
+
 }

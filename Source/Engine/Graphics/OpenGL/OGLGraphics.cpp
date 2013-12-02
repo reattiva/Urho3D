@@ -30,6 +30,7 @@
 #include "CustomGeometry.h"
 #include "DebugRenderer.h"
 #include "DecalSet.h"
+#include "Drawable2D.h"
 #include "Graphics.h"
 #include "GraphicsEvents.h"
 #include "GraphicsImpl.h"
@@ -2763,6 +2764,7 @@ void RegisterGraphicsLibrary(Context* context)
     ParticleEmitter2D::RegisterObject(context);
     CustomGeometry::RegisterObject(context);
     DecalSet::RegisterObject(context);
+    Drawable2D::RegisterObject(context);
     Terrain::RegisterObject(context);
     TerrainPatch::RegisterObject(context);
     DebugRenderer::RegisterObject(context);

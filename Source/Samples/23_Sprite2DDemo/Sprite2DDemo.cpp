@@ -31,6 +31,7 @@
 #include "Sprite2D.h"
 #include "Sprite2DDemo.h"
 #include "SpriteSheet.h"
+#include <stdio.h>
 
 #include "DebugNew.h"
 
@@ -56,6 +57,8 @@ void Sprite2DDemo::Start()
     SubscribeToEvents();
 }
 
+SpriteSheet* spriteSheet;
+
 void Sprite2DDemo::CreateScene()
 {
     ResourceCache* cache = GetSubsystem<ResourceCache>();
@@ -73,22 +76,20 @@ void Sprite2DDemo::CreateScene()
     camera->SetOrthographic(true);
     camera->SetOrthoSize(Vector2(width, height));
 
-    SpriteSheet* spriteSheet = cache->GetResource<SpriteSheet>("SpriteSheets/spineboy.xml");
+    spriteSheet = cache->GetResource<SpriteSheet>("SpriteSheets/spineboy.xml");
     if (!spriteSheet)
         return;
 
+    
     const Vector<String>& spriteNames = spriteSheet->GetAllSpriteNames();
-    for (unsigned i = 0; i < 50; ++i)
+    for (unsigned i = 0; i < 1; ++i)
     {
         SharedPtr<Node> spriteNode(scene_->CreateChild("Sprite"));
-
         Sprite2D* sprite2D = spriteNode->CreateComponent<Sprite2D>();
-        sprite2D->SetSpriteFrame(spriteSheet, spriteNames[i % spriteNames.Size()]);
-        sprite2D->SetBlendMode(BLEND_ALPHA);
-        
-        Vector3 moveSpeed(Random(400.0f) - 200.0f, Random(400.0f) - 200.0f, 0.0f);
-        spriteNode->SetVar("MoveSpeed", moveSpeed);        
-        spriteNode->SetRotation(Quaternion(Atan2(moveSpeed.y_, moveSpeed.x_), Vector3::FORWARD));
+        sprite2D->SetBlendMode(BLEND_ALPHA);        
+        //Vector3 moveSpeed(Random(400.0f) - 200.0f, Random(400.0f) - 200.0f, 0.0f);
+        // spriteNode->SetVar("MoveSpeed", moveSpeed);        
+        //spriteNode->SetRotation(Quaternion(Atan2(moveSpeed.y_, moveSpeed.x_), Vector3::FORWARD));
 
         spriteNodes_.Push(spriteNode);
     }
@@ -116,9 +117,32 @@ void Sprite2DDemo::HandleUpdate(StringHash eventType, VariantMap& eventData)
     float yRange = (float)graphics->GetHeight() / 2.0f;
 
     // Take the frame time step, which is stored as a float
+    static int index = 0;
+    static float totalTime = 0.0f;
     float timeStep = eventData[P_TIMESTEP].GetFloat();
-    
+    totalTime += timeStep;
+
+    int currentIndex = totalTime * 15;
+
+    if (currentIndex == index)
+        return;
+
+    index = currentIndex;
+
+    const Vector<String>& spriteNames = spriteSheet->GetAllSpriteNames();
+    // return;
     for (unsigned i = 0; i < spriteNodes_.Size(); ++i)
+    {
+        SharedPtr<Node> spriteNode = spriteNodes_[i];
+
+        Sprite2D* sprite2D = spriteNode->GetComponent<Sprite2D>();
+
+        char spriteName[128];
+        sprintf_s(spriteName, "spineboy-walk%d.png", currentIndex % (spriteNames.Size() - 1));
+        sprite2D->SetSpriteFrame(spriteSheet, spriteName);
+    }
+    
+   /* for (unsigned i = 0; i < spriteNodes_.Size(); ++i)
     {
         SharedPtr<Node> spriteNode = spriteNodes_[i];
 
@@ -141,5 +165,5 @@ void Sprite2DDemo::HandleUpdate(StringHash eventType, VariantMap& eventData)
         }
 
         spriteNode->SetPosition(position);
-    }
+    }*/
 }

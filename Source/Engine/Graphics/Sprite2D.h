@@ -27,8 +27,6 @@
 namespace Urho3D
 {
 
-class SpriteSheet;
-
 /// 2D sprite component.
 class URHO3D_API Sprite2D : public Drawable2D
 {
@@ -54,7 +52,7 @@ public:
     void SetHotSpot(float x, float y);
     /// Set color.
     void SetColor(const Color& color);
-    
+
     /// Return size.
     float GetUnitPerPixel() const { return unitPerPixel_; }
     /// Return flip X.
@@ -69,6 +67,10 @@ public:
 protected:
     /// Update vertices.
     virtual void UpdateVertices();
+    /// Build quad vertices.
+    void BuildQuadVertices(Vertex2D& vertex0, Vertex2D& vertex1, Vertex2D& vertex2, Vertex2D& vertex3, Texture* texture);
+    /// Build quad vertices.
+    void BuildQuadVertices(Vertex2D& vertex0, Vertex2D& vertex1, Vertex2D& vertex2, Vertex2D& vertex3, Texture* texture, const SpriteFrame* spriteFrame);
 
     /// Unit per pixel.
     float unitPerPixel_;

@@ -1,16 +1,16 @@
 <?xml version="1.0"?>
 <SpriteSheet texture="Textures/Crafts.png">
-	<Sprite name="bigbomber.png" left="304" top="79" right="464" bottom="129" />
-	<Sprite name="blimp.png" left="2" top="2" right="302" bottom="84" />
-	<Sprite name="bomber.png" left="2" top="131" right="120" bottom="175" />
-	<Sprite name="cruise.png" left="2" top="177" right="92" bottom="210" />
-	<Sprite name="deflector.png" left="2" top="212" right="102" bottom="243" />
-	<Sprite name="deltabomber.png" left="164" top="86" right="274" bottom="122" />
-	<Sprite name="deltajet.png" left="164" top="124" right="264" bottom="158" />
-	<Sprite name="fatbomber.png" left="304" top="2" right="502" bottom="77" />
-	<Sprite name="jetfighter.png" left="186" top="192" right="266" bottom="220" />
-	<Sprite name="propfighter.png" left="181" top="160" right="251" bottom="190" />
-	<Sprite name="smalljet.png" left="104" top="210" right="184" bottom="240" />
-	<Sprite name="strafer.png" left="94" top="177" right="179" bottom="208" />
-	<Sprite name="superbomber.png" left="2" top="86" right="162" bottom="129" />
+	<SpriteFrame name="bigbomber.png" x="304" y="79" width="160" height="50" />
+	<SpriteFrame name="blimp.png" x="2" y="2" width="300" height="82" />
+	<SpriteFrame name="bomber.png" x="2" y="131" width="118" height="44" offsetX="-1" originWidth="120" />
+	<SpriteFrame name="cruise.png" x="2" y="177" width="90" height="33" offsetY="1" originHeight="35" />
+	<SpriteFrame name="deflector.png" x="2" y="212" width="100" height="31" offsetY="1" originHeight="33" />
+	<SpriteFrame name="deltabomber.png" x="164" y="86" width="110" height="36" />
+	<SpriteFrame name="deltajet.png" x="164" y="124" width="100" height="34" />
+	<SpriteFrame name="fatbomber.png" x="304" y="2" width="198" height="75" offsetY="1" originWidth="200" originHeight="77" />
+	<SpriteFrame name="jetfighter.png" x="186" y="192" width="80" height="28" />
+	<SpriteFrame name="propfighter.png" x="181" y="160" width="70" height="30" />
+	<SpriteFrame name="smalljet.png" x="104" y="210" width="80" height="30" />
+	<SpriteFrame name="strafer.png" x="94" y="177" width="85" height="31" />
+	<SpriteFrame name="superbomber.png" x="2" y="86" width="160" height="43" />
 </SpriteSheet>

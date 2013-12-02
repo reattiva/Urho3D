@@ -109,7 +109,9 @@ protected:
     virtual void UpdateVertices() = 0;
     /// Create materials for sprite rendering.
     virtual void UpdateMaterial(bool forceUpdate = false);
-
+    /// Mark geometry dirty.
+    void MarkGeometryDirty();
+    
     /// Sprite sheet.
     SharedPtr<SpriteSheet> spriteSheet_;
     /// Sprite name.
@@ -136,7 +138,7 @@ protected:
     /// Geometry dirty flag.
     bool geometryDirty_;
     /// Material dirty flag.
-    bool materialDirty_;    
+    bool materialDirty_;
 };
 
 }

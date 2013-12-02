@@ -35,7 +35,7 @@ namespace Urho3D
 extern const char* GEOMETRY_CATEGORY;
 
 Sprite2D::Sprite2D(Context* context) : Drawable2D(context),
-    unitPerPixel_(2.0f),
+    unitPerPixel_(1.0f),
     flipX_(false),
     flipY_(false),
     hotSpot_(0.5f, 0.5f),
@@ -63,8 +63,7 @@ void Sprite2D::RegisterObject(Context* context)
 void Sprite2D::SetUnitPerPixel(float unitPerPixel)
 {
     unitPerPixel_ = Max(1.0f, unitPerPixel);
-
-    verticesDirty_ = true;
+    MarkGeometryDirty();
 }
 
 void Sprite2D::SetFilpX(bool flipX)
@@ -72,8 +71,7 @@ void Sprite2D::SetFilpX(bool flipX)
     if (flipX_ != flipX)
     {
         flipX_ = flipX;
-
-        verticesDirty_ = true;
+        MarkGeometryDirty();
     }
 }
 
@@ -82,8 +80,7 @@ void Sprite2D::SetFlipY(bool flipY)
     if (flipY_ != flipY)
     {
         flipY_ = flipY;
-
-        verticesDirty_ = true;
+        MarkGeometryDirty();
     }
 }
 
@@ -91,7 +88,7 @@ void Sprite2D::SetHotSpot(const Vector2& hotSpot)
 {
     hotSpot_ = hotSpot;
 
-    verticesDirty_ = true;
+    MarkGeometryDirty();
 }
 
 void Sprite2D::SetHotSpot(float x, float y)
@@ -103,7 +100,7 @@ void Sprite2D::SetColor(const Color& color)
 {
     color_ = color;
 
-    verticesDirty_ = true;
+    MarkGeometryDirty();
 }
 
 void Sprite2D::UpdateVertices()
@@ -134,59 +131,10 @@ void Sprite2D::UpdateVertices()
     Vertex2D vertex2;
     Vertex2D vertex3;
 
-    float width;
-    float height;
-
-    if (spriteFrame_)
-    {
-        width = (float)spriteFrame_->width_;
-        height = (float)spriteFrame_->height_;
-    }
+    if (!spriteFrame_)
+        BuildQuadVertices(vertex0, vertex1, vertex2, vertex3, texture);
     else
-    {
-        width = (float)texture->GetWidth();
-        height = (float)texture->GetHeight();
-    }
-
-    width /= unitPerPixel_;
-    height /= unitPerPixel_;
-
-    float hotSpotX = flipX_ ? (1.0f - hotSpot_.x_) : hotSpot_.x_;
-    float hotSpotY = flipY_ ? (1.0f - hotSpot_.y_) : hotSpot_.y_;
-    float leftX = -width * hotSpotX;
-    float bottomY = -height * hotSpotY;
-    vertex0.position_ = Vector3(leftX, bottomY, 0.0f);
-    vertex1.position_ = Vector3(leftX, bottomY + height, 0.0f);
-    vertex2.position_ = Vector3(leftX + width, bottomY + height, 0.0f);
-    vertex3.position_ = Vector3(leftX + width, bottomY, 0.0f);
-
-    float leftU = 0.0f;
-    float bottomV = 0.0f;
-    float rightU = 1.0f;
-    float topV = 1.0f;
-
-    if (spriteFrame_)
-    {
-        float invTexW = 1.0f / texture->GetWidth();
-        float invTexH = 1.0f / texture->GetHeight();
-
-        leftU = spriteFrame_->x_ * invTexW;
-        rightU = (spriteFrame_->x_ + spriteFrame_->width_) * invTexW;
-        bottomV = (spriteFrame_->y_ + spriteFrame_->height_) * invTexH;
-        topV = spriteFrame_->y_* invTexH;
-    }
-
-    if (flipX_)
-        Swap(leftU, rightU);
-    if (flipY_)
-        Swap(bottomV, topV);
-
-    vertex0.uv_ = Vector2(leftU, bottomV);
-    vertex1.uv_ = Vector2(leftU, topV);
-    vertex2.uv_ = Vector2(rightU, topV);
-    vertex3.uv_ = Vector2(rightU, bottomV);
-
-    vertex0.color_ = vertex1.color_ = vertex2.color_  = vertex3.color_ = color_.ToUInt();
+        BuildQuadVertices(vertex0, vertex1, vertex2, vertex3, texture, spriteFrame_);
 
     vertices_.Push(vertex0);
     vertices_.Push(vertex1);
@@ -200,4 +148,96 @@ void Sprite2D::UpdateVertices()
     geometryDirty_ = true;
 }
 
+void Sprite2D::BuildQuadVertices(Vertex2D& vertex0, Vertex2D& vertex1, Vertex2D& vertex2, Vertex2D& vertex3, Texture* texture)
+{
+    float width = (float)texture->GetWidth();
+    float height = (float)texture->GetHeight();
+    width /= unitPerPixel_;
+    height /= unitPerPixel_;
+
+    float hotSpotX = flipX_ ? (1.0f - hotSpot_.x_) : hotSpot_.x_;
+    float hotSpotY = flipY_ ? (1.0f - hotSpot_.y_) : hotSpot_.y_;
+    float leftX = width * hotSpotX;
+    float bottomY = height * hotSpotY;
+
+    vertex0.position_ = Vector3(leftX, bottomY, 0.0f);
+    vertex1.position_ = Vector3(leftX, bottomY + height, 0.0f);
+    vertex2.position_ = Vector3(leftX + width, bottomY + height, 0.0f);
+    vertex3.position_ = Vector3(leftX + width, bottomY, 0.0f);
+
+    vertex0.uv_ = Vector2(0.0f, 1.0f);
+    vertex1.uv_ = Vector2(0.0f, 0.0f);
+    vertex2.uv_ = Vector2(1.0f, 0.0f);
+    vertex3.uv_ = Vector2(1.0f, 1.0f);
+
+    if (flipX_)
+    {
+        Swap(vertex0.uv_.x_, vertex3.uv_.x_);
+        Swap(vertex1.uv_.x_, vertex2.uv_.x_);
+    }
+    if (flipY_)
+    {
+        Swap(vertex0.uv_.y_, vertex1.uv_.y_);
+        Swap(vertex2.uv_.y_, vertex3.uv_.y_);
+    }
+    vertex0.color_ = vertex1.color_ = vertex2.color_  = vertex3.color_ = color_.ToUInt();
+}
+
+void Sprite2D::BuildQuadVertices(Vertex2D& vertex0, Vertex2D& vertex1, Vertex2D& vertex2, Vertex2D& vertex3, Texture* texture, const SpriteFrame* spriteFrame)
+{
+    float pixelPerUnit = 1.0f / unitPerPixel_;
+    float width = (float)spriteFrame_->width_ * pixelPerUnit;
+    float height = (float)spriteFrame_->height_ * pixelPerUnit;
+    float offsetX = (float)spriteFrame_->offsetX_ * pixelPerUnit;
+    float offsetY = (float)spriteFrame_->offsetY_ * pixelPerUnit;
+
+    float hotSpotX = flipX_ ? (1.0f - hotSpot_.x_) : hotSpot_.x_;
+    float hotSpotY = flipY_ ? (1.0f - hotSpot_.y_) : hotSpot_.y_;
+    float leftX = offsetX - width * hotSpotX;
+    float bottomY = offsetY - height * hotSpotY;
+
+    vertex0.position_ = Vector3(leftX, bottomY, 0.0f);
+    vertex1.position_ = Vector3(leftX, bottomY + height, 0.0f);
+    vertex2.position_ = Vector3(leftX + width, bottomY + height, 0.0f);
+    vertex3.position_ = Vector3(leftX + width, bottomY, 0.0f);
+
+    float invTexW = 1.0f / texture->GetWidth();
+    float invTexH = 1.0f / texture->GetHeight();
+    float leftU = spriteFrame_->x_ * invTexW;
+    float topV = spriteFrame_->y_* invTexH;
+
+    if (spriteFrame_->rotated_)
+    {
+        float rightU = (spriteFrame_->x_ + spriteFrame_->height_) * invTexW;
+        float bottomV = (spriteFrame_->y_ + spriteFrame_->width_) * invTexH;
+
+        vertex0.uv_ = Vector2(leftU, topV);
+        vertex1.uv_ = Vector2(rightU, topV);
+        vertex2.uv_ = Vector2(rightU, bottomV);
+        vertex3.uv_ = Vector2(leftU, bottomV);
+    }
+    else
+    {
+
+        float rightU = (spriteFrame_->x_ + spriteFrame_->width_) * invTexW;
+        float bottomV = (spriteFrame_->y_ + spriteFrame_->height_) * invTexH;
+
+        vertex0.uv_ = Vector2(leftU, bottomV);
+        vertex1.uv_ = Vector2(leftU, topV);
+        vertex2.uv_ = Vector2(rightU, topV);
+        vertex3.uv_ = Vector2(rightU, bottomV);
+    }
+
+    if (flipX_)
+    {
+        Swap(vertex0.uv_.x_, vertex3.uv_.x_);
+        Swap(vertex1.uv_.x_, vertex2.uv_.x_);
+    }
+    if (flipY_)
+    {
+        Swap(vertex0.uv_.y_, vertex1.uv_.y_);
+        Swap(vertex2.uv_.y_, vertex3.uv_.y_);
+    }
+    vertex0.color_ = vertex1.color_ = vertex2.color_  = vertex3.color_ = color_.ToUInt();
+}
 }

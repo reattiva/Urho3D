@@ -78,6 +78,9 @@ void Drawable2D::UpdateBatches(const FrameInfo& frame)
     if (materialDirty_)
         UpdateMaterial();
 
+    if (geometryDirty_)
+        UpdateGeometry(frame);
+
     batches_[0].geometry_ = geometry_;
     batches_[0].material_ = usedMaterial_;
     
@@ -124,14 +127,14 @@ void Drawable2D::SetSpriteFrame(SpriteSheet* spriteSheet, const String& spriteNa
     if (spriteSheet_ != spriteSheet)
     {
         spriteSheet_ = spriteSheet;
-        verticesDirty_ = true;
+        MarkGeometryDirty();
         materialDirty_ = true;
     }
 
     if (spriteName_ != spriteName)
     {
         spriteName_ = spriteName;
-        verticesDirty_ = true;
+        MarkGeometryDirty();
     }
 
     spriteFrame_ = 0;
@@ -142,14 +145,14 @@ void Drawable2D::SetSpriteFrame(SpriteSheet* spriteSheet, const String& spriteNa
 void Drawable2D::SetTexture(Texture* texture)
 {
     texture_ = texture;
-
+    MarkGeometryDirty();
     materialDirty_ = true;
 }
 
 void Drawable2D::SetMaterial(Material* material)
 {
     material_ = material;
-
+    MarkGeometryDirty();
     materialDirty_ = true;
 }
 
@@ -260,6 +263,12 @@ void Drawable2D::UpdateMaterial(bool forceUpdate)
     usedMaterial_->SetTexture(TU_DIFFUSE, texture);
 
     materialDirty_ = false;
+}
+
+void Drawable2D::MarkGeometryDirty()
+{
+    verticesDirty_ = true;
+    geometryDirty_ = true;
 }
 
 }

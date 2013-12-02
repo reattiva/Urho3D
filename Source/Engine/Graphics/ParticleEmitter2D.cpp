@@ -614,21 +614,34 @@ void ParticleEmitter2D::UpdateVertices()
         float invTexH = 1.0f / texture->GetHeight();
 
         float leftU = spriteFrame_->x_ * invTexW;
-        float rightU = (spriteFrame_->x_ + spriteFrame_->width_) * invTexW;
-        float bottomV = (spriteFrame_->y_ + spriteFrame_->height_) * invTexH;
         float topV = spriteFrame_->y_* invTexH;
 
-        vertex0.uv_ = Vector2(leftU, bottomV);
-        vertex1.uv_ = Vector2(leftU, topV);
-        vertex2.uv_ = Vector2(rightU, topV);
-        vertex3.uv_ = Vector2(rightU, bottomV);
+        if (spriteFrame_->rotated_)
+        {
+            float rightU = (spriteFrame_->x_ + spriteFrame_->height_) * invTexW;
+            float bottomV = (spriteFrame_->y_ + spriteFrame_->width_) * invTexH;
+
+            vertex0.uv_ = Vector2(leftU, topV);
+            vertex1.uv_ = Vector2(rightU, topV);
+            vertex2.uv_ = Vector2(rightU, bottomV);
+            vertex3.uv_ = Vector2(leftU, bottomV);
+        }
+        else
+        {
+            float rightU = (spriteFrame_->x_ + spriteFrame_->width_) * invTexW;
+            float bottomV = (spriteFrame_->y_ + spriteFrame_->height_) * invTexH;
+            vertex0.uv_ = Vector2(leftU, bottomV);
+            vertex1.uv_ = Vector2(leftU, topV);
+            vertex2.uv_ = Vector2(rightU, topV);
+            vertex3.uv_ = Vector2(rightU, bottomV);
+        }
     }
     else
     {
-        vertex0.uv_ = Vector2(0.0f, 0.0f);
-        vertex1.uv_ = Vector2(0.0f, 1.0f);
-        vertex2.uv_ = Vector2(1.0f, 1.0f);
-        vertex3.uv_ = Vector2(1.0f, 0.0f);
+        vertex0.uv_ = Vector2(0.0f, 1.0f);
+        vertex1.uv_ = Vector2(0.0f, 0.0f);
+        vertex2.uv_ = Vector2(1.0f, 0.0f);
+        vertex3.uv_ = Vector2(1.0f, 1.0f);
     }
 
     for (unsigned i = 0; i < particles_.Size(); ++i)
@@ -639,6 +652,7 @@ void ParticleEmitter2D::UpdateVertices()
         float s = Sin(p.rotation_);
         float add = (c + s) * p.size_ * 0.5f;
         float sub = (c - s) * p.size_ * 0.5f;
+
         vertex0.position_ = Vector3(p.position_.x_ - sub, p.position_.y_ - add, 0.0f);
         vertex1.position_ = Vector3(p.position_.x_ - add, p.position_.y_ + sub, 0.0f);
         vertex2.position_ = Vector3(p.position_.x_ + sub, p.position_.y_ + add, 0.0f);
