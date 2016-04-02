@@ -1,0 +1,6 @@
+<texturearray>
+    <layer name="Textures/NinjaSnowWar/CloudPlane.dds" />
+    <layer name="Textures/NinjaSnowWar/Snow.dds" />
+    <layer name="Textures/NinjaSnowWar/SnowCrate.dds" />
+    <quality low="0" />
+</texturearray>
