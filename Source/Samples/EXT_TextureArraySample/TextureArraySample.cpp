@@ -122,7 +122,7 @@ void TextureArraySample::CreateScene()
             URHO3D_LOGERROR("Texture2DArray missing");
         else
         {
-#if 0
+#if 1
 #elif defined(URHO3D_D3D11)
             SharedArrayPtr<char> buffer1(new char[2048*2048*4]);
             if (!array->GetData(1, 0, buffer1))
