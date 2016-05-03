@@ -129,3 +129,5 @@ endif ()
 if (URHO3D_EXTRAS)
     add_subdirectory (Extras)
 endif ()
+
+add_subdirectory (Work)
