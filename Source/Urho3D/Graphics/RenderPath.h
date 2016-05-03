@@ -167,10 +167,14 @@ struct URHO3D_API RenderPathCommand
     String vertexShaderName_;
     /// Pixel shader name.
     String pixelShaderName_;
+    /// Geometry shader name.
+    String geometryShaderName_;
     /// Vertex shader defines.
     String vertexShaderDefines_;
     /// Pixel shader defines.
     String pixelShaderDefines_;
+    /// Geometry shader defines.
+    String geometryShaderDefines_;
     /// Textures.
     String textureNames_[MAX_TEXTURE_UNITS];
     /// %Shader parameters.

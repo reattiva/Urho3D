@@ -159,8 +159,10 @@ void RenderPathCommand::Load(const XMLElement& element)
     case CMD_QUAD:
         vertexShaderName_ = element.GetAttribute("vs");
         pixelShaderName_ = element.GetAttribute("ps");
+        geometryShaderName_ = element.GetAttribute("gs");
         vertexShaderDefines_ = element.GetAttribute("vsdefines");
         pixelShaderDefines_ = element.GetAttribute("psdefines");
+        geometryShaderDefines_ = element.GetAttribute("gsdefines");
 
         if (type_ == CMD_QUAD)
         {

@@ -392,7 +392,7 @@ void Renderer::SetShadowQuality(ShadowQuality quality)
     {
         if (quality == SHADOWQUALITY_SIMPLE_16BIT)
             quality = SHADOWQUALITY_PCF_16BIT;
-        
+
         if (quality == SHADOWQUALITY_SIMPLE_24BIT)
             quality = SHADOWQUALITY_PCF_24BIT;
     }
@@ -777,7 +777,7 @@ void Renderer::QueueViewport(RenderSurface* renderTarget, Viewport* viewport)
 {
     if (viewport)
     {
-        Pair<WeakPtr<RenderSurface>, WeakPtr<Viewport> > newView = 
+        Pair<WeakPtr<RenderSurface>, WeakPtr<Viewport> > newView =
             MakePair(WeakPtr<RenderSurface>(renderTarget), WeakPtr<Viewport>(viewport));
 
         // Prevent double add of the same rendertarget/viewport combination
@@ -1121,6 +1121,7 @@ void Renderer::SetBatchShaders(Batch& batch, Technique* tech, bool allowShadows)
     Pass* pass = batch.pass_;
     Vector<SharedPtr<ShaderVariation> >& vertexShaders = pass->GetVertexShaders();
     Vector<SharedPtr<ShaderVariation> >& pixelShaders = pass->GetPixelShaders();
+    Vector<SharedPtr<ShaderVariation> >& geometryShaders = pass->GetGeometryShaders();
     if (!vertexShaders.Size() || !pixelShaders.Size() || pass->GetShadersLoadedFrameNumber() != shadersChangedFrameNumber_)
     {
         // First release all previous shaders, then load
@@ -1149,6 +1150,7 @@ void Renderer::SetBatchShaders(Batch& batch, Technique* tech, bool allowShadows)
                 // Do not log error, as it would result in a lot of spam
                 batch.vertexShader_ = 0;
                 batch.pixelShader_ = 0;
+                batch.geometryShader_ = 0;
                 return;
             }
 
@@ -1191,6 +1193,7 @@ void Renderer::SetBatchShaders(Batch& batch, Technique* tech, bool allowShadows)
 
             batch.vertexShader_ = vertexShaders[vsi];
             batch.pixelShader_ = pixelShaders[psi];
+            batch.geometryShader_ = geometryShaders.Size() > 0 ? geometryShaders[vsi] : (ShaderVariation*)0;
         }
         else
         {
@@ -1203,11 +1206,13 @@ void Renderer::SetBatchShaders(Batch& batch, Technique* tech, bool allowShadows)
 
                 unsigned vsi = batch.geometryType_ * MAX_VERTEXLIGHT_VS_VARIATIONS + numVertexLights;
                 batch.vertexShader_ = vertexShaders[vsi];
+                batch.geometryShader_ = geometryShaders.Size() > 0 ? geometryShaders[vsi] : (ShaderVariation*)0;
             }
             else
             {
                 unsigned vsi = batch.geometryType_;
                 batch.vertexShader_ = vertexShaders[vsi];
+                batch.geometryShader_ = geometryShaders.Size() > 0 ? geometryShaders[vsi] : (ShaderVariation*)0;
             }
 
             batch.pixelShader_ = pixelShaders[heightFog ? 1 : 0];
@@ -1273,6 +1278,8 @@ void Renderer::SetLightVolumeBatchShaders(Batch& batch, Camera* camera, const St
         batch.pixelShader_ = graphics_->GetShader(PS, psName, deferredLightPSVariations_[psi] + psDefines);
     else
         batch.pixelShader_ = graphics_->GetShader(PS, psName, deferredLightPSVariations_[psi]);
+
+    batch.geometryShader_ = 0;
 }
 
 void Renderer::SetCullMode(CullMode mode, Camera* camera)
@@ -1580,7 +1587,7 @@ void Renderer::LoadShaders()
 
     // Construct new names for deferred light volume pixel shaders based on rendering options
     deferredLightPSVariations_.Resize(MAX_DEFERRED_LIGHT_PS_VARIATIONS);
-    
+
     for (unsigned i = 0; i < MAX_DEFERRED_LIGHT_PS_VARIATIONS; ++i)
     {
         deferredLightPSVariations_[i] = lightPSVariations[i % DLPS_ORTHO];
@@ -1599,10 +1606,12 @@ void Renderer::LoadPassShaders(Pass* pass)
 
     Vector<SharedPtr<ShaderVariation> >& vertexShaders = pass->GetVertexShaders();
     Vector<SharedPtr<ShaderVariation> >& pixelShaders = pass->GetPixelShaders();
+    Vector<SharedPtr<ShaderVariation> >& geometryShaders = pass->GetGeometryShaders();
 
     // Forget all the old shaders
     vertexShaders.Clear();
     pixelShaders.Clear();
+    geometryShaders.Clear();
 
     String extraShaderDefines = " ";
     if (pass->GetName() == "shadow"
@@ -1670,6 +1679,16 @@ void Renderer::LoadPassShaders(Pass* pass)
         {
             pixelShaders[j] =
                 graphics_->GetShader(PS, pass->GetPixelShader(), pass->GetPixelShaderDefines() + extraShaderDefines + heightFogVariations[j]);
+        }
+    }
+
+    if (!pass->GetGeometryShader().Empty())
+    {
+        geometryShaders.Resize(vertexShaders.Size());
+        for (unsigned j = 0; j < vertexShaders.Size(); ++j)
+        {
+            geometryShaders[j] = graphics_->GetShader(GS, pass->GetGeometryShader(),
+                pass->GetGeometryShaderDefines() + " " + vertexShaders[j]->GetDefines() );
         }
     }
 

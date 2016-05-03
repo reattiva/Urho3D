@@ -97,6 +97,9 @@ public:
     /// Return shader type.
     ShaderType GetShaderType() const { return type_; }
 
+    /// Return shader type name.
+    const String& GetTypeName() const;
+
     /// Return shader name.
     const String& GetName() const { return name_; }
 

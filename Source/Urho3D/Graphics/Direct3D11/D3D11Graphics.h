@@ -75,7 +75,48 @@ struct ScratchBuffer
     bool reserved_;
 };
 
-typedef HashMap<Pair<ShaderVariation*, ShaderVariation*>, SharedPtr<ShaderProgram> > ShaderProgramMap;
+struct ShadersKey
+{
+    ShadersKey() :
+        vertexShader_(0),
+        pixelShader_(0),
+        geometryShader_(0)
+    {}
+
+    ShadersKey(ShaderVariation* vertexShader, ShaderVariation* pixelShader, ShaderVariation* geometryShader) :
+        vertexShader_(vertexShader),
+        pixelShader_(pixelShader),
+        geometryShader_(geometryShader)
+    {}
+
+    bool operator == (const ShadersKey& rhs) const
+    {
+        return vertexShader_ == rhs.vertexShader_ &&
+               pixelShader_ == rhs.pixelShader_ &&
+               geometryShader_ == rhs.geometryShader_;
+    }
+
+    bool Contains(ShaderVariation* variation) const
+    {
+        return variation == vertexShader_ ||
+               variation == pixelShader_ ||
+               variation == geometryShader_;
+    }
+
+    unsigned ToHash() const
+    {
+        unsigned key = MakeHash(geometryShader_) << 22;
+        key += (MakeHash(pixelShader_) & 0x7FF) << 11;
+        key += MakeHash(vertexShader_) & 0x7FF;
+        return key;
+    }
+
+    ShaderVariation* vertexShader_;
+    ShaderVariation* pixelShader_;
+    ShaderVariation* geometryShader_;
+};
+
+typedef HashMap<ShadersKey, SharedPtr<ShaderProgram> > ShaderProgramMap;
 
 /// %Graphics subsystem. Manages the application window, rendering state and GPU resources.
 class URHO3D_API Graphics : public Object
@@ -145,7 +186,7 @@ public:
     /// Set index buffer.
     void SetIndexBuffer(IndexBuffer* buffer);
     /// Set shaders.
-    void SetShaders(ShaderVariation* vs, ShaderVariation* ps);
+    void SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariation* gs = 0);
     /// Set shader float constants.
     void SetShaderParameter(StringHash param, const float* data, unsigned count);
     /// Set shader float constant.
@@ -352,6 +393,9 @@ public:
 
     /// Return current pixel shader.
     ShaderVariation* GetPixelShader() const { return pixelShader_; }
+
+    /// Return current geometry shader.
+    ShaderVariation* GetGeometryShader() const { return geometryShader_; }
 
     /// Return texture unit index by name.
     TextureUnit GetTextureUnit(const String& name);
@@ -595,6 +639,8 @@ private:
     ShaderVariation* vertexShader_;
     /// Pixel shader in use.
     ShaderVariation* pixelShader_;
+    /// Geometry shader in use.
+    ShaderVariation* geometryShader_;
     /// Textures in use.
     Texture* textures_[MAX_TEXTURE_UNITS];
     /// Texture unit mappings.

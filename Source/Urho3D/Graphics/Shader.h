@@ -43,6 +43,8 @@ public:
     /// Register object factory.
     static void RegisterObject(Context* context);
 
+    void SieveShadersCode(const String& code);
+
     /// Load resource from stream. May be called from a worker thread. Return true if successful.
     virtual bool BeginLoad(Deserializer& source);
     /// Finish resource loading. Always called from the main thread. Return true if successful.
@@ -53,8 +55,11 @@ public:
     /// Return a variation with defines.
     ShaderVariation* GetVariation(ShaderType type, const char* defines);
 
-    /// Return either vertex or pixel shader source code.
-    const String& GetSourceCode(ShaderType type) const { return type == VS ? vsSourceCode_ : psSourceCode_; }
+    /// Return specified shader source code.
+    const String& GetSourceCode(ShaderType type) const
+    {
+        return sourceCode_[type < MAX_SHADER_TYPE ? type : 0];
+    }
 
     /// Return the latest timestamp of the shader code and its includes.
     unsigned GetTimeStamp() const { return timeStamp_; }
@@ -67,14 +72,10 @@ private:
     /// Recalculate the memory used by the shader.
     void RefreshMemoryUse();
 
-    /// Source code adapted for vertex shader.
-    String vsSourceCode_;
-    /// Source code adapted for pixel shader.
-    String psSourceCode_;
-    /// Vertex shader variations.
-    HashMap<StringHash, SharedPtr<ShaderVariation> > vsVariations_;
-    /// Pixel shader variations.
-    HashMap<StringHash, SharedPtr<ShaderVariation> > psVariations_;
+    /// Shader source codes.
+    String sourceCode_[MAX_SHADER_TYPE];
+    /// Shader variations.
+    HashMap<StringHash, SharedPtr<ShaderVariation> > variations_[MAX_SHADER_TYPE];
     /// Source code timestamp.
     unsigned timeStamp_;
     /// Number of unique variations so far.

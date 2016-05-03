@@ -137,6 +137,12 @@ void Pass::SetPixelShader(const String& name)
     ReleaseShaders();
 }
 
+void Pass::SetGeometryShader(const String& name)
+{
+    geometryShaderName_ = name;
+    ReleaseShaders();
+}
+
 void Pass::SetVertexShaderDefines(const String& defines)
 {
     vertexShaderDefines_ = defines;
@@ -149,10 +155,17 @@ void Pass::SetPixelShaderDefines(const String& defines)
     ReleaseShaders();
 }
 
+void Pass::SetGeometryShaderDefines(const String& defines)
+{
+    geometryShaderDefines_ = defines;
+    ReleaseShaders();
+}
+
 void Pass::ReleaseShaders()
 {
     vertexShaders_.Clear();
     pixelShaders_.Clear();
+    geometryShaders_.Clear();
 }
 
 void Pass::MarkShadersLoaded(unsigned frameNumber)
@@ -206,13 +219,17 @@ bool Technique::BeginLoad(Deserializer& source)
 
     String globalVS = rootElem.GetAttribute("vs");
     String globalPS = rootElem.GetAttribute("ps");
+    String globalGS = rootElem.GetAttribute("gs");
     String globalVSDefines = rootElem.GetAttribute("vsdefines");
     String globalPSDefines = rootElem.GetAttribute("psdefines");
+    String globalGSDefines = rootElem.GetAttribute("gsdefines");
     // End with space so that the pass-specific defines can be appended
     if (!globalVSDefines.Empty())
         globalVSDefines += ' ';
     if (!globalPSDefines.Empty())
         globalPSDefines += ' ';
+    if (!globalGSDefines.Empty())
+        globalGSDefines += ' ';
     bool globalAlphaMask = false;
     if (rootElem.HasAttribute("alphamask"))
         globalAlphaMask = rootElem.GetBool("alphamask");
@@ -247,6 +264,16 @@ bool Technique::BeginLoad(Deserializer& source)
             {
                 newPass->SetPixelShader(globalPS);
                 newPass->SetPixelShaderDefines(globalPSDefines + passElem.GetAttribute("psdefines"));
+            }
+            if (passElem.HasAttribute("gs"))
+            {
+                newPass->SetGeometryShader(passElem.GetAttribute("gs"));
+                newPass->SetGeometryShaderDefines(passElem.GetAttribute("gsdefines"));
+            }
+            else
+            {
+                newPass->SetGeometryShader(globalGS);
+                newPass->SetGeometryShaderDefines(globalGSDefines + passElem.GetAttribute("gsdefines"));
             }
 
             if (passElem.HasAttribute("lighting"))

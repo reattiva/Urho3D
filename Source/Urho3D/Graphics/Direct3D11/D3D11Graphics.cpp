@@ -991,7 +991,7 @@ void Graphics::SetIndexBuffer(IndexBuffer* buffer)
     }
 }
 
-void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
+void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariation* gs)
 {
     // Switch to the clip plane variations if necessary
     if (useClipPlane_)
@@ -1000,10 +1000,11 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
             vs = vs->GetOwner()->GetVariation(VS, vs->GetDefinesClipPlane());
         if (ps)
             ps = ps->GetOwner()->GetVariation(PS, ps->GetDefinesClipPlane());
+        if (gs)
+            gs = gs->GetOwner()->GetVariation(GS, gs->GetDefinesClipPlane());
     }
 
-    if (vs == vertexShader_ && ps == pixelShader_)
-        return;
+    bool shaderChanged = false;
 
     if (vs != vertexShader_)
     {
@@ -1028,6 +1029,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
         impl_->deviceContext_->VSSetShader((ID3D11VertexShader*)(vs ? vs->GetGPUObject() : 0), 0, 0);
         vertexShader_ = vs;
         vertexDeclarationDirty_ = true;
+        shaderChanged = true;
     }
 
     if (ps != pixelShader_)
@@ -1051,56 +1053,83 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps)
 
         impl_->deviceContext_->PSSetShader((ID3D11PixelShader*)(ps ? ps->GetGPUObject() : 0), 0, 0);
         pixelShader_ = ps;
+        shaderChanged = true;
     }
+
+    if (gs != geometryShader_)
+    {
+        if (gs && !gs->GetGPUObject())
+        {
+            if (gs->GetCompilerOutput().Empty())
+            {
+                URHO3D_PROFILE(CompileGeometryShader);
+
+                bool success = gs->Create();
+                if (!success)
+                {
+                    URHO3D_LOGERROR("Failed to compile geometry shader " + gs->GetFullName() + ":\n" + gs->GetCompilerOutput());
+                    gs = 0;
+                }
+            }
+            else
+                gs = 0;
+        }
+
+        impl_->deviceContext_->GSSetShader((ID3D11GeometryShader*)(gs ? gs->GetGPUObject() : 0), 0, 0);
+        geometryShader_ = gs;
+        shaderChanged = true;
+    }
+
+    if (!shaderChanged)
+        return;
 
     // Update current shader parameters & constant buffers
     if (vertexShader_ && pixelShader_)
     {
-        Pair<ShaderVariation*, ShaderVariation*> key = MakePair(vertexShader_, pixelShader_);
+        ShadersKey key(vertexShader_, pixelShader_, geometryShader_);
+
         ShaderProgramMap::Iterator i = shaderPrograms_.Find(key);
         if (i != shaderPrograms_.End())
             shaderProgram_ = i->second_.Get();
         else
         {
-            ShaderProgram* newProgram = shaderPrograms_[key] = new ShaderProgram(this, vertexShader_, pixelShader_);
+            ShaderProgram* newProgram = new ShaderProgram(this, vertexShader_, pixelShader_, geometryShader_);
+            shaderPrograms_[key] = newProgram;
             shaderProgram_ = newProgram;
         }
 
-        bool vsBuffersChanged = false;
-        bool psBuffersChanged = false;
+        bool buffersChanged[MAX_SHADER_TYPE];
 
-        for (unsigned i = 0; i < MAX_SHADER_PARAMETER_GROUPS; ++i)
+        for (unsigned shaderType = 0; shaderType < MAX_SHADER_TYPE; ++shaderType)
         {
-            ID3D11Buffer* vsBuffer = shaderProgram_->vsConstantBuffers_[i] ? (ID3D11Buffer*)shaderProgram_->vsConstantBuffers_[i]->
-                GetGPUObject() : 0;
-            if (vsBuffer != impl_->constantBuffers_[VS][i])
-            {
-                impl_->constantBuffers_[VS][i] = vsBuffer;
-                shaderParameterSources_[i] = (const void*)M_MAX_UNSIGNED;
-                vsBuffersChanged = true;
-            }
+            buffersChanged[shaderType] = false;
 
-            ID3D11Buffer* psBuffer = shaderProgram_->psConstantBuffers_[i] ? (ID3D11Buffer*)shaderProgram_->psConstantBuffers_[i]->
-                GetGPUObject() : 0;
-            if (psBuffer != impl_->constantBuffers_[PS][i])
+            for (unsigned i = 0; i < MAX_SHADER_PARAMETER_GROUPS; ++i)
             {
-                impl_->constantBuffers_[PS][i] = psBuffer;
-                shaderParameterSources_[i] = (const void*)M_MAX_UNSIGNED;
-                psBuffersChanged = true;
+                ConstantBuffer* constantBuffer = shaderProgram_->constantBuffers_[shaderType][i];
+                ID3D11Buffer* buffer = constantBuffer ? (ID3D11Buffer*)constantBuffer->GetGPUObject() : 0;
+                if (buffer != impl_->constantBuffers_[shaderType][i])
+                {
+                    impl_->constantBuffers_[shaderType][i] = buffer;
+                    shaderParameterSources_[i] = (const void*)M_MAX_UNSIGNED;
+                    buffersChanged[shaderType] = true;
+                }
             }
         }
 
-        if (vsBuffersChanged)
+        if (buffersChanged[VS])
             impl_->deviceContext_->VSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[VS][0]);
-        if (psBuffersChanged)
+        if (buffersChanged[PS])
             impl_->deviceContext_->PSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[PS][0]);
+        if (buffersChanged[GS])
+            impl_->deviceContext_->GSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[GS][0]);
     }
     else
         shaderProgram_ = 0;
 
     // Store shader combination if shader dumping in progress
     if (shaderPrecache_)
-        shaderPrecache_->StoreShaders(vertexShader_, pixelShader_);
+        shaderPrecache_->StoreShaders(vertexShader_, pixelShader_, geometryShader_);
 
     // Update clip plane parameter if necessary
     if (useClipPlane_)
@@ -1299,7 +1328,9 @@ bool Graphics::HasShaderParameter(StringHash param)
 
 bool Graphics::HasTextureUnit(TextureUnit unit)
 {
-    return (vertexShader_ && vertexShader_->HasTextureUnit(unit)) || (pixelShader_ && pixelShader_->HasTextureUnit(unit));
+    return (vertexShader_ && vertexShader_->HasTextureUnit(unit)) ||
+           (pixelShader_ && pixelShader_->HasTextureUnit(unit)) ||
+           (geometryShader_ && geometryShader_->HasTextureUnit(unit));
 }
 
 void Graphics::ClearParameterSource(ShaderParameterGroup group)
@@ -2044,13 +2075,13 @@ void Graphics::CleanUpShaderPrograms(ShaderVariation* variation)
 {
     for (ShaderProgramMap::Iterator i = shaderPrograms_.Begin(); i != shaderPrograms_.End();)
     {
-        if (i->first_.first_ == variation || i->first_.second_ == variation)
+        if (i->first_.Contains(variation))
             i = shaderPrograms_.Erase(i);
         else
             ++i;
     }
 
-    if (vertexShader_ == variation || pixelShader_ == variation)
+    if (vertexShader_ == variation || pixelShader_ == variation || geometryShader_ == variation)
         shaderProgram_ = 0;
 }
 
@@ -2476,6 +2507,7 @@ void Graphics::ResetCachedState()
     {
         impl_->constantBuffers_[VS][i] = 0;
         impl_->constantBuffers_[PS][i] = 0;
+        impl_->constantBuffers_[GS][i] = 0;
     }
 
     depthStencil_ = 0;
@@ -2487,6 +2519,7 @@ void Graphics::ResetCachedState()
     primitiveType_ = 0;
     vertexShader_ = 0;
     pixelShader_ = 0;
+    geometryShader_ = 0;
     shaderProgram_ = 0;
     blendMode_ = BLEND_REPLACE;
     textureAnisotropy_ = 1;
@@ -2554,15 +2587,27 @@ void Graphics::PrepareDraw()
     if (texturesDirty_ && firstDirtyTexture_ < M_MAX_UNSIGNED)
     {
         // Set also VS textures to enable vertex texture fetch to work the same way as on OpenGL
-        impl_->deviceContext_->VSSetShaderResources(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
-            &impl_->shaderResourceViews_[firstDirtyTexture_]);
-        impl_->deviceContext_->VSSetSamplers(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
-            &impl_->samplers_[firstDirtyTexture_]);
-        impl_->deviceContext_->PSSetShaderResources(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
-            &impl_->shaderResourceViews_[firstDirtyTexture_]);
-        impl_->deviceContext_->PSSetSamplers(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
-            &impl_->samplers_[firstDirtyTexture_]);
-
+        if (vertexShader_)
+        {
+            impl_->deviceContext_->VSSetShaderResources(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
+                &impl_->shaderResourceViews_[firstDirtyTexture_]);
+            impl_->deviceContext_->VSSetSamplers(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
+                &impl_->samplers_[firstDirtyTexture_]);
+        }
+        if (pixelShader_)
+        {
+            impl_->deviceContext_->PSSetShaderResources(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
+                &impl_->shaderResourceViews_[firstDirtyTexture_]);
+            impl_->deviceContext_->PSSetSamplers(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
+                &impl_->samplers_[firstDirtyTexture_]);
+        }
+        if (geometryShader_)
+        {
+            impl_->deviceContext_->GSSetShaderResources(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
+                &impl_->shaderResourceViews_[firstDirtyTexture_]);
+            impl_->deviceContext_->GSSetSamplers(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
+                &impl_->samplers_[firstDirtyTexture_]);
+        }
         firstDirtyTexture_ = lastDirtyTexture_ = M_MAX_UNSIGNED;
         texturesDirty_ = false;
     }

@@ -104,6 +104,8 @@ struct Batch
     ShaderVariation* vertexShader_;
     /// Pixel shader.
     ShaderVariation* pixelShader_;
+    /// Geometry shader.
+    ShaderVariation* geometryShader_;
     /// %Geometry type.
     GeometryType geometryType_;
 };

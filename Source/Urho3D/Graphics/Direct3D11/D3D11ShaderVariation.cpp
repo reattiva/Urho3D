@@ -84,7 +84,9 @@ bool ShaderVariation::Create()
     // Check for up-to-date bytecode on disk
     String path, name, extension;
     SplitPath(owner_->GetName(), path, name, extension);
-    extension = type_ == VS ? ".vs4" : ".ps4";
+
+    static const char* extensions[] = { ".vs4", ".ps4", ".gs4" };
+    extension = extensions[type_];
 
     String binaryShaderName = path + "Cache/" + name + "_" + StringHash(defines_).ToString() + extension;
 
@@ -100,8 +102,9 @@ bool ShaderVariation::Create()
 
     // Then create shader from the bytecode
     ID3D11Device* device = graphics_->GetImpl()->GetDevice();
-    if (type_ == VS)
+    switch (type_)
     {
+    case VS:
         if (device && byteCode_.Size())
         {
             HRESULT hr = device->CreateVertexShader(&byteCode_[0], byteCode_.Size(), 0, (ID3D11VertexShader**)&object_);
@@ -113,9 +116,8 @@ bool ShaderVariation::Create()
         }
         else
             compilerOutput_ = "Could not create vertex shader, empty bytecode";
-    }
-    else
-    {
+        break;
+    case PS:
         if (device && byteCode_.Size())
         {
             HRESULT hr = device->CreatePixelShader(&byteCode_[0], byteCode_.Size(), 0, (ID3D11PixelShader**)&object_);
@@ -127,6 +129,20 @@ bool ShaderVariation::Create()
         }
         else
             compilerOutput_ = "Could not create pixel shader, empty bytecode";
+        break;
+    case GS:
+        if (device && byteCode_.Size())
+        {
+            HRESULT hr = device->CreateGeometryShader(&byteCode_[0], byteCode_.Size(), 0, (ID3D11GeometryShader**)&object_);
+            if (FAILED(hr))
+            {
+                URHO3D_SAFE_RELEASE(object_);
+                compilerOutput_ = "Could not create geometry shader (HRESULT " + ToStringHex((unsigned)hr) + ")";
+            }
+        }
+        else
+            compilerOutput_ = "Could not create geometry shader, empty bytecode";
+        break;
     }
 
     return object_ != 0;
@@ -141,15 +157,20 @@ void ShaderVariation::Release()
 
         graphics_->CleanUpShaderPrograms(this);
 
-        if (type_ == VS)
+        switch (type_)
         {
+        case VS:
             if (graphics_->GetVertexShader() == this)
-                graphics_->SetShaders(0, 0);
-        }
-        else
-        {
+                graphics_->SetShaders(0, 0, 0);
+            break;
+        case PS:
             if (graphics_->GetPixelShader() == this)
-                graphics_->SetShaders(0, 0);
+                graphics_->SetShaders(0, 0, 0);
+            break;
+        case GS:
+            if (graphics_->GetGeometryShader() == this)
+                graphics_->SetShaders(0, 0, 0);
+            break;
         }
 
         URHO3D_SAFE_RELEASE(object_);
@@ -184,6 +205,13 @@ void ShaderVariation::SetDefines(const String& defines)
 Shader* ShaderVariation::GetOwner() const
 {
     return owner_;
+}
+
+const String& ShaderVariation::GetTypeName() const
+{
+    static const String names[] = { "Vertex", "Pixel", "Geometry" };
+    assert(sizeof(names) == MAX_SHADER_TYPE * sizeof(String));
+    return names[type_];
 }
 
 bool ShaderVariation::LoadByteCode(const String& binaryShaderName)
@@ -239,11 +267,7 @@ bool ShaderVariation::LoadByteCode(const String& binaryShaderName)
     {
         byteCode_.Resize(byteCodeSize);
         file->Read(&byteCode_[0], byteCodeSize);
-
-        if (type_ == VS)
-            URHO3D_LOGDEBUG("Loaded cached vertex shader " + GetFullName());
-        else
-            URHO3D_LOGDEBUG("Loaded cached pixel shader " + GetFullName());
+        URHO3D_LOGDEBUG("Loaded cached " + GetTypeName() + " shader " + GetFullName());
 
         CalculateConstantBufferSizes();
         return true;
@@ -267,18 +291,24 @@ bool ShaderVariation::Compile()
 
     defines.Push("D3D11");
 
-    if (type_ == VS)
+    switch (type_)
     {
+    case VS:
         entryPoint = "VS";
         defines.Push("COMPILEVS");
         profile = "vs_4_0";
-    }
-    else
-    {
+        break;
+    case PS:
         entryPoint = "PS";
         defines.Push("COMPILEPS");
         profile = "ps_4_0";
         flags |= D3DCOMPILE_PREFER_FLOW_CONTROL;
+        break;
+    case GS:
+        entryPoint = "GS";
+        defines.Push("COMPILEGS");
+        profile = "gs_4_0";
+        break;
     }
 
     defines.Push("MAXBONES=" + String(Graphics::GetMaxBones()));
@@ -330,10 +360,7 @@ bool ShaderVariation::Compile()
     }
     else
     {
-        if (type_ == VS)
-            URHO3D_LOGDEBUG("Compiled vertex shader " + GetFullName());
-        else
-            URHO3D_LOGDEBUG("Compiled pixel shader " + GetFullName());
+        URHO3D_LOGDEBUG("Compiled " + GetTypeName() + " shader " + GetFullName());
 
         unsigned char* bufData = (unsigned char*)shaderCode->GetBufferPointer();
         unsigned bufSize = (unsigned)shaderCode->GetBufferSize();
@@ -352,7 +379,7 @@ bool ShaderVariation::Compile()
 
     URHO3D_SAFE_RELEASE(shaderCode);
     URHO3D_SAFE_RELEASE(errorMsgs);
-    
+
     return !byteCode_.Empty();
 }
 

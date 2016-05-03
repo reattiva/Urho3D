@@ -63,10 +63,14 @@ public:
     void SetVertexShader(const String& name);
     /// Set pixel shader name.
     void SetPixelShader(const String& name);
+    /// Set geometry shader name.
+    void SetGeometryShader(const String& name);
     /// Set vertex shader defines.
     void SetVertexShaderDefines(const String& defines);
     /// Set pixel shader defines.
     void SetPixelShaderDefines(const String& defines);
+    /// Set geometry shader defines.
+    void SetGeometryShaderDefines(const String& defines);
     /// Reset shader pointers.
     void ReleaseShaders();
     /// Mark shaders loaded this frame.
@@ -102,6 +106,9 @@ public:
     /// Return vertex shader name.
     const String& GetVertexShader() const { return vertexShaderName_; }
 
+    /// Return geometry shader name.
+    const String& GetGeometryShader() const { return geometryShaderName_; }
+
     /// Return pixel shader name.
     const String& GetPixelShader() const { return pixelShaderName_; }
 
@@ -111,11 +118,17 @@ public:
     /// Return pixel shader defines.
     const String& GetPixelShaderDefines() const { return pixelShaderDefines_; }
 
+    /// Return geometry shader defines.
+    const String& GetGeometryShaderDefines() const { return geometryShaderDefines_; }
+
     /// Return vertex shaders.
     Vector<SharedPtr<ShaderVariation> >& GetVertexShaders() { return vertexShaders_; }
 
     /// Return pixel shaders.
     Vector<SharedPtr<ShaderVariation> >& GetPixelShaders() { return pixelShaders_; }
+
+    /// Return geometry shaders.
+    Vector<SharedPtr<ShaderVariation> >& GetGeometryShaders() { return geometryShaders_; }
 
 private:
     /// Pass index.
@@ -138,14 +151,20 @@ private:
     String vertexShaderName_;
     /// Pixel shader name.
     String pixelShaderName_;
+    /// Geometry shader name.
+    String geometryShaderName_;
     /// Vertex shader defines.
     String vertexShaderDefines_;
     /// Pixel shader defines.
     String pixelShaderDefines_;
+    /// Geometry shader defines.
+    String geometryShaderDefines_;
     /// Vertex shaders.
     Vector<SharedPtr<ShaderVariation> > vertexShaders_;
     /// Pixel shaders.
     Vector<SharedPtr<ShaderVariation> > pixelShaders_;
+    /// Geometry shaders.
+    Vector<SharedPtr<ShaderVariation> > geometryShaders_;
     /// Pass name.
     String name_;
 };
