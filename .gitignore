@@ -24,6 +24,7 @@ generated/
 # Compiled shaders
 *.vs?
 *.ps?
+*.gs?
 
 # Compiled AngelScript
 *.asc
@@ -95,3 +96,5 @@ configure*
 *.bak
 Thumbs.db
 .directory
+
+/build*/
