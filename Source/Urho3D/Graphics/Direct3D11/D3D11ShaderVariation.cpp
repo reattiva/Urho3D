@@ -307,6 +307,7 @@ bool ShaderVariation::Compile()
     case GS:
         entryPoint = "GS";
         defines.Push("COMPILEGS");
+        defines.Push("COMPILEVS");
         profile = "gs_4_0";
         break;
     }

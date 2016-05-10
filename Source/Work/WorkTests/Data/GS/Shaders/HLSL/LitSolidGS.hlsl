@@ -1,6 +1,3 @@
-#ifdef COMPILEGS
-#define COMPILEVS
-#endif
 #include "Uniforms.hlsl"
 #include "Samplers.hlsl"
 #include "Transform.hlsl"
