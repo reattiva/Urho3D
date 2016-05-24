@@ -991,7 +991,7 @@ void Graphics::SetIndexBuffer(IndexBuffer* buffer)
     }
 }
 
-void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariation* gs)
+void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariation* gs, ShaderVariation* cs)
 {
     // Switch to the clip plane variations if necessary
     if (useClipPlane_)
@@ -1080,20 +1080,44 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariat
         shaderChanged = true;
     }
 
+    if (cs != computeShader_)
+    {
+        if (cs && !cs->GetGPUObject())
+        {
+            if (cs->GetCompilerOutput().Empty())
+            {
+                URHO3D_PROFILE(CompileComputeShader);
+
+                bool success = cs->Create();
+                if (!success)
+                {
+                    URHO3D_LOGERROR("Failed to compile compute shader " + cs->GetFullName() + ":\n" + cs->GetCompilerOutput());
+                    cs = 0;
+                }
+            }
+            else
+                cs = 0;
+        }
+
+        impl_->deviceContext_->CSSetShader((ID3D11ComputeShader*)(cs ? cs->GetGPUObject() : 0), 0, 0);
+        computeShader_ = cs;
+        shaderChanged = true;
+    }
+
     if (!shaderChanged)
         return;
 
     // Update current shader parameters & constant buffers
-    if (vertexShader_ && pixelShader_)
+    if (vertexShader_ || computeShader_)
     {
-        ShadersKey key(vertexShader_, pixelShader_, geometryShader_);
+        ShadersKey key(vertexShader_, pixelShader_, geometryShader_, computeShader_);
 
         ShaderProgramMap::Iterator i = shaderPrograms_.Find(key);
         if (i != shaderPrograms_.End())
             shaderProgram_ = i->second_.Get();
         else
         {
-            ShaderProgram* newProgram = new ShaderProgram(this, vertexShader_, pixelShader_, geometryShader_);
+            ShaderProgram* newProgram = new ShaderProgram(this, vertexShader_, pixelShader_, geometryShader_, computeShader_);
             shaderPrograms_[key] = newProgram;
             shaderProgram_ = newProgram;
         }
@@ -1123,17 +1147,29 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariat
             impl_->deviceContext_->PSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[PS][0]);
         if (buffersChanged[GS])
             impl_->deviceContext_->GSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[GS][0]);
+        if (buffersChanged[CS])
+            impl_->deviceContext_->CSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[CS][0]);
     }
     else
         shaderProgram_ = 0;
 
     // Store shader combination if shader dumping in progress
     if (shaderPrecache_)
-        shaderPrecache_->StoreShaders(vertexShader_, pixelShader_, geometryShader_);
+        shaderPrecache_->StoreShaders(vertexShader_, pixelShader_, geometryShader_, computeShader_);
 
     // Update clip plane parameter if necessary
     if (useClipPlane_)
         SetShaderParameter(VSP_CLIPPLANE, clipPlane_);
+}
+
+void Graphics::SetComputeShader(ShaderVariation* cs)
+{
+    SetShaders(0, 0, 0, cs);
+}
+
+void Graphics::Compute(unsigned x, unsigned y, unsigned z)
+{
+    impl_->deviceContext_->Dispatch(x, y, z);
 }
 
 void Graphics::SetShaderParameter(StringHash param, const float* data, unsigned count)
@@ -1330,7 +1366,8 @@ bool Graphics::HasTextureUnit(TextureUnit unit)
 {
     return (vertexShader_ && vertexShader_->HasTextureUnit(unit)) ||
            (pixelShader_ && pixelShader_->HasTextureUnit(unit)) ||
-           (geometryShader_ && geometryShader_->HasTextureUnit(unit));
+           (geometryShader_ && geometryShader_->HasTextureUnit(unit)) ||
+           (computeShader_ && computeShader_->HasTextureUnit(unit));
 }
 
 void Graphics::ClearParameterSource(ShaderParameterGroup group)
@@ -2081,7 +2118,8 @@ void Graphics::CleanUpShaderPrograms(ShaderVariation* variation)
             ++i;
     }
 
-    if (vertexShader_ == variation || pixelShader_ == variation || geometryShader_ == variation)
+    if (vertexShader_ == variation || pixelShader_ == variation ||
+        geometryShader_ == variation || computeShader_ == variation)
         shaderProgram_ = 0;
 }
 
@@ -2520,6 +2558,7 @@ void Graphics::ResetCachedState()
     vertexShader_ = 0;
     pixelShader_ = 0;
     geometryShader_ = 0;
+    computeShader_ = 0;
     shaderProgram_ = 0;
     blendMode_ = BLEND_REPLACE;
     textureAnisotropy_ = 1;

@@ -36,12 +36,13 @@ class URHO3D_API ShaderProgram : public RefCounted
 public:
     /// Construct.
     ShaderProgram(Graphics* graphics, ShaderVariation* vertexShader, ShaderVariation* pixelShader,
-                  ShaderVariation* geometryShader = 0)
+                  ShaderVariation* geometryShader, ShaderVariation* computeShader)
     {
         ShaderVariation* shaders[MAX_SHADER_TYPE];
         shaders[VS] = vertexShader;
         shaders[PS] = pixelShader;
         shaders[GS] = geometryShader;
+        shaders[CS] = computeShader;
 
         for (unsigned shaderType = 0; shaderType < MAX_SHADER_TYPE; ++shaderType)
         {

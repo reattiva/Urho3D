@@ -85,7 +85,7 @@ bool ShaderVariation::Create()
     String path, name, extension;
     SplitPath(owner_->GetName(), path, name, extension);
 
-    static const char* extensions[] = { ".vs4", ".ps4", ".gs4" };
+    static const char* extensions[] = { ".vs4", ".ps4", ".gs4", ".cs4" };
     extension = extensions[type_];
 
     String binaryShaderName = path + "Cache/" + name + "_" + StringHash(defines_).ToString() + extension;
@@ -143,6 +143,19 @@ bool ShaderVariation::Create()
         else
             compilerOutput_ = "Could not create geometry shader, empty bytecode";
         break;
+    case CS:
+        if (device && byteCode_.Size())
+        {
+            HRESULT hr = device->CreateComputeShader(&byteCode_[0], byteCode_.Size(), 0, (ID3D11ComputeShader**)&object_);
+            if (FAILED(hr))
+            {
+                URHO3D_SAFE_RELEASE(object_);
+                compilerOutput_ = "Could not create compute shader (HRESULT " + ToStringHex((unsigned)hr) + ")";
+            }
+        }
+        else
+            compilerOutput_ = "Could not create compute shader, empty bytecode";
+        break;
     }
 
     return object_ != 0;
@@ -161,15 +174,19 @@ void ShaderVariation::Release()
         {
         case VS:
             if (graphics_->GetVertexShader() == this)
-                graphics_->SetShaders(0, 0, 0);
+                graphics_->SetShaders(0, 0, 0, 0);
             break;
         case PS:
             if (graphics_->GetPixelShader() == this)
-                graphics_->SetShaders(0, 0, 0);
+                graphics_->SetShaders(0, 0, 0, 0);
             break;
         case GS:
             if (graphics_->GetGeometryShader() == this)
-                graphics_->SetShaders(0, 0, 0);
+                graphics_->SetShaders(0, 0, 0, 0);
+            break;
+        case CS:
+            if (graphics_->GetComputeShader() == this)
+                graphics_->SetShaders(0, 0, 0, 0);
             break;
         }
 
@@ -209,7 +226,7 @@ Shader* ShaderVariation::GetOwner() const
 
 const String& ShaderVariation::GetTypeName() const
 {
-    static const String names[] = { "Vertex", "Pixel", "Geometry" };
+    static const String names[] = { "Vertex", "Pixel", "Geometry", "Compute" };
     assert(sizeof(names) == MAX_SHADER_TYPE * sizeof(String));
     return names[type_];
 }
@@ -291,24 +308,32 @@ bool ShaderVariation::Compile()
 
     defines.Push("D3D11");
 
+    ID3D11Device* device = graphics_->GetImpl()->GetDevice();
+    bool d3d11features = device->GetFeatureLevel() >= D3D_FEATURE_LEVEL_11_0;
+
     switch (type_)
     {
     case VS:
         entryPoint = "VS";
         defines.Push("COMPILEVS");
-        profile = "vs_4_0";
+        profile = d3d11features ? "vs_5_0" : "vs_4_0";
         break;
     case PS:
         entryPoint = "PS";
         defines.Push("COMPILEPS");
-        profile = "ps_4_0";
+        profile = d3d11features ? "ps_5_0" : "ps_4_0";
         flags |= D3DCOMPILE_PREFER_FLOW_CONTROL;
         break;
     case GS:
         entryPoint = "GS";
         defines.Push("COMPILEGS");
         defines.Push("COMPILEVS");
-        profile = "gs_4_0";
+        profile = d3d11features ? "gs_5_0" : "gs_4_0";
+        break;
+    case CS:
+        entryPoint = "CS";
+        defines.Push("COMPILECS");
+        profile = d3d11features ? "cs_5_0" : "cs_4_0";
         break;
     }
 

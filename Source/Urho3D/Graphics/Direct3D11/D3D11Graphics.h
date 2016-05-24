@@ -83,37 +83,42 @@ struct ShadersKey
         geometryShader_(0)
     {}
 
-    ShadersKey(ShaderVariation* vertexShader, ShaderVariation* pixelShader, ShaderVariation* geometryShader) :
+    ShadersKey(ShaderVariation* vertexShader, ShaderVariation* pixelShader,
+               ShaderVariation* geometryShader, ShaderVariation* computeShader) :
         vertexShader_(vertexShader),
         pixelShader_(pixelShader),
-        geometryShader_(geometryShader)
+        geometryShader_(geometryShader),
+        computeShader_(computeShader)
     {}
 
     bool operator == (const ShadersKey& rhs) const
     {
         return vertexShader_ == rhs.vertexShader_ &&
                pixelShader_ == rhs.pixelShader_ &&
-               geometryShader_ == rhs.geometryShader_;
+               geometryShader_ == rhs.geometryShader_ &&
+               computeShader_ == rhs.computeShader_;
     }
 
     bool Contains(ShaderVariation* variation) const
     {
         return variation == vertexShader_ ||
                variation == pixelShader_ ||
-               variation == geometryShader_;
+               variation == geometryShader_ ||
+               variation == computeShader_;
     }
 
     unsigned ToHash() const
     {
         unsigned key = MakeHash(geometryShader_) << 22;
         key += (MakeHash(pixelShader_) & 0x7FF) << 11;
-        key += MakeHash(vertexShader_) & 0x7FF;
+        key += (MakeHash(vertexShader_) & 0x7FF) | MakeHash(computeShader_);
         return key;
     }
 
     ShaderVariation* vertexShader_;
     ShaderVariation* pixelShader_;
     ShaderVariation* geometryShader_;
+    ShaderVariation* computeShader_;
 };
 
 typedef HashMap<ShadersKey, SharedPtr<ShaderProgram> > ShaderProgramMap;
@@ -185,8 +190,12 @@ public:
     bool SetVertexBuffers(const Vector<SharedPtr<VertexBuffer> >& buffers, unsigned instanceOffset = 0);
     /// Set index buffer.
     void SetIndexBuffer(IndexBuffer* buffer);
+    /// Execute the compute shader.
+    void Compute(unsigned x, unsigned y, unsigned z);
     /// Set shaders.
-    void SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariation* gs = 0);
+    void SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariation* gs = 0, ShaderVariation* cs = 0);
+    /// Set compute shader.
+    void SetComputeShader(ShaderVariation* cs);
     /// Set shader float constants.
     void SetShaderParameter(StringHash param, const float* data, unsigned count);
     /// Set shader float constant.
@@ -396,6 +405,9 @@ public:
 
     /// Return current geometry shader.
     ShaderVariation* GetGeometryShader() const { return geometryShader_; }
+
+    /// Return current compute shader.
+    ShaderVariation* GetComputeShader() const { return computeShader_; }
 
     /// Return texture unit index by name.
     TextureUnit GetTextureUnit(const String& name);
@@ -641,6 +653,8 @@ private:
     ShaderVariation* pixelShader_;
     /// Geometry shader in use.
     ShaderVariation* geometryShader_;
+    /// Compute shader in use.
+    ShaderVariation* computeShader_;
     /// Textures in use.
     Texture* textures_[MAX_TEXTURE_UNITS];
     /// Texture unit mappings.

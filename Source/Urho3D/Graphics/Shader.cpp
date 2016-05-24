@@ -188,7 +188,7 @@ struct CodePoint
 void Shader::SieveShadersCode(const String& code)
 {
     static const String strVoid("void ");
-    static const String strNames[] = { "VS(", "PS(", "GS(" };
+    static const String strNames[] = { "VS(", "PS(", "GS(", "CS(" };
     static const String oglName("main(");
     assert(sizeof(strNames) == MAX_SHADER_TYPE * sizeof(String));
 

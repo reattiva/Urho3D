@@ -51,7 +51,8 @@ ShaderPrecache::ShaderPrecache(Context* context, const String& fileName) :
         {
             String oldCombination = shader.GetAttribute("vs") + shader.GetAttribute("vsdefines") +
                                     shader.GetAttribute("ps") + shader.GetAttribute("psdefines") +
-                                    shader.GetAttribute("gs") + shader.GetAttribute("gsdefines");
+                                    shader.GetAttribute("gs") + shader.GetAttribute("gsdefines") +
+                                    shader.GetAttribute("cs") + shader.GetAttribute("csdefines");
             usedCombinations_.Insert(oldCombination);
 
             shader = shader.GetNext("shader");
@@ -76,13 +77,14 @@ ShaderPrecache::~ShaderPrecache()
     xmlFile_.Save(dest);
 }
 
-void ShaderPrecache::StoreShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariation* gs)
+void ShaderPrecache::StoreShaders(ShaderVariation* vs, ShaderVariation* ps,
+                                  ShaderVariation* gs, ShaderVariation* cs)
 {
-    if (!vs || !ps)
+    if (!vs && !cs)
         return;
 
     // Check for duplicate using pointers first (fast)
-    ShadersKey key(vs, ps, gs);
+    ShadersKey key(vs, ps, gs, cs);
     if (usedPtrCombinations_.Contains(key))
         return;
     usedPtrCombinations_.Insert(key);
@@ -94,6 +96,8 @@ void ShaderPrecache::StoreShaders(ShaderVariation* vs, ShaderVariation* ps, Shad
         newCombination += ps->GetName() + ps->GetDefines();
     if (gs)
         newCombination += gs->GetName() + gs->GetDefines();
+    if (cs)
+        newCombination += cs->GetName() + cs->GetDefines();
 
     // Check for duplicate using strings (needed for combinations loaded from existing file)
     if (usedCombinations_.Contains(newCombination))
@@ -116,6 +120,11 @@ void ShaderPrecache::StoreShaders(ShaderVariation* vs, ShaderVariation* ps, Shad
         shaderElem.SetAttribute("gs", gs->GetName());
         shaderElem.SetAttribute("gsdefines", gs->GetDefines());
     }
+    if (cs)
+    {
+        shaderElem.SetAttribute("cs", cs->GetName());
+        shaderElem.SetAttribute("csdefines", cs->GetDefines());
+    }
 }
 
 void ShaderPrecache::LoadShaders(Graphics* graphics, Deserializer& source)
@@ -131,6 +140,7 @@ void ShaderPrecache::LoadShaders(Graphics* graphics, Deserializer& source)
         String vsDefines = shader.GetAttribute("vsdefines");
         String psDefines = shader.GetAttribute("psdefines");
         String gsDefines = shader.GetAttribute("gsdefines");
+        String csDefines = shader.GetAttribute("csdefines");
 
         // Check for illegal variations on OpenGL ES and skip them
 #ifdef GL_ES_VERSION_2_0
@@ -148,8 +158,9 @@ void ShaderPrecache::LoadShaders(Graphics* graphics, Deserializer& source)
         ShaderVariation* vs = graphics->GetShader(VS, shader.GetAttribute("vs"), vsDefines);
         ShaderVariation* ps = graphics->GetShader(PS, shader.GetAttribute("ps"), psDefines);
         ShaderVariation* gs = graphics->GetShader(GS, shader.GetAttribute("gs"), gsDefines);
+        ShaderVariation* cs = graphics->GetShader(CS, shader.GetAttribute("cs"), csDefines);
         // Set the shaders active to actually compile them
-        graphics->SetShaders(vs, ps, gs);
+        graphics->SetShaders(vs, ps, gs, cs);
 
         shader = shader.GetNext("shader");
     }

@@ -295,6 +295,7 @@ enum ShaderType
     VS = 0,
     PS,
     GS,
+    CS,
     MAX_SHADER_TYPE
 };
 
