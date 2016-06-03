@@ -1154,6 +1154,33 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariat
             impl_->deviceContext_->GSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[GS][0]);
         if (buffersChanged[CS])
             impl_->deviceContext_->CSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[CS][0]);
+
+        for (unsigned i = 0; i < shaderProgram_->resourceViewBuffers_.Size(); ++i)
+        {
+            const SlotBufferPair& pair = shaderProgram_->resourceViewBuffers_.At(i);
+            unsigned slot = pair.first_;
+            ShaderBuffer* buffer = pair.second_;
+            ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)buffer->GetShaderResourceView();
+            if (srv != impl_->shaderResourceViews_[slot])
+            {
+                impl_->shaderResourceViews_[slot] = srv;
+                SetDirtyEnds(slot, firstDirtyTexture_, lastDirtyTexture_);
+                texturesDirty_ = true;
+            }
+        }
+
+        for (unsigned i = 0; i < shaderProgram_->accessViewBuffers_.Size(); ++i)
+        {
+            const SlotBufferPair& pair = shaderProgram_->accessViewBuffers_.At(i);
+            unsigned slot = pair.first_;
+            ShaderBuffer* buffer = pair.second_;
+            ID3D11UnorderedAccessView* uav = (ID3D11UnorderedAccessView*)buffer->GetUnorderedAccessView();
+            if (uav != impl_->unorderedAccessViews_[slot])
+            {
+                impl_->unorderedAccessViews_[slot] = uav;
+                SetDirtyEnds(slot, firstDirtyUav_, lastDirtyUav_);
+            }
+        }
     }
     else
         shaderProgram_ = 0;
@@ -1174,6 +1201,8 @@ void Graphics::SetComputeShader(ShaderVariation* cs)
 
 void Graphics::Compute(unsigned x, unsigned y, unsigned z)
 {
+    PrepareCompute();
+
     impl_->deviceContext_->Dispatch(x, y, z);
 }
 
@@ -2629,6 +2658,28 @@ void Graphics::ResetCachedState()
     firstDirtyUav_ = lastDirtyUav_ = M_MAX_UNSIGNED;
     firstDirtyVB_ = lastDirtyVB_ = M_MAX_UNSIGNED;
     dirtyConstantBuffers_.Clear();
+}
+
+void Graphics::PrepareCompute()
+{
+    if (firstDirtyUav_ < M_MAX_UNSIGNED)
+    {
+        if (computeShader_)
+            impl_->deviceContext_->CSSetUnorderedAccessViews(firstDirtyUav_, lastDirtyUav_ - firstDirtyUav_ + 1,
+                &impl_->unorderedAccessViews_[firstDirtyUav_], 0);
+
+        firstDirtyUav_ = lastDirtyUav_ = M_MAX_UNSIGNED;
+    }
+
+    if (texturesDirty_ && firstDirtyTexture_ < M_MAX_UNSIGNED)
+    {
+        if (computeShader_)
+            impl_->deviceContext_->CSSetShaderResources(firstDirtyTexture_, lastDirtyTexture_ - firstDirtyTexture_ + 1,
+                &impl_->shaderResourceViews_[firstDirtyTexture_]);
+
+        firstDirtyTexture_ = lastDirtyTexture_ = M_MAX_UNSIGNED;
+        texturesDirty_ = false;
+    }
 }
 
 void Graphics::PrepareDraw()

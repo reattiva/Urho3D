@@ -577,6 +577,8 @@ private:
     void ResetCachedState();
     /// Initialize texture unit mappings.
     void SetTextureUnitMappings();
+    /// Process dirtied state before compute.
+    void PrepareCompute();
     /// Process dirtied state before draw.
     void PrepareDraw();
     /// Create intermediate texture for multisampled backbuffer resolve. No-op if already exists.
