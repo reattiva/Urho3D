@@ -85,7 +85,7 @@ bool ShaderVariation::Create()
     String path, name, extension;
     SplitPath(owner_->GetName(), path, name, extension);
 
-    static const char* extensions[] = { ".vs4", ".ps4", ".gs4", ".cs4" };
+    static const char* extensions[] = { ".vs5", ".ps5", ".gs5", ".cs5" };
     extension = extensions[type_];
 
     String binaryShaderName = path + "Cache/" + name + "_" + StringHash(defines_).ToString() + extension;
@@ -199,6 +199,7 @@ void ShaderVariation::Release()
         useTextureUnit_[i] = false;
     for (unsigned i = 0; i < MAX_SHADER_PARAMETER_GROUPS; ++i)
         constantBufferSizes_[i] = 0;
+    resources_.Clear();
     parameters_.Clear();
     byteCode_.Clear();
     elementHash_ = 0;
@@ -256,6 +257,19 @@ bool ShaderVariation::LoadByteCode(const String& binaryShaderName)
     /*unsigned short shaderModel = */file->ReadUShort();
     elementHash_ = file->ReadUInt();
     elementHash_ <<= 32;
+
+    unsigned numResources = file->ReadUInt();
+    for (unsigned i = 0; i < numResources; ++i)
+    {
+        String name = file->ReadString();
+        ShaderResourceType type = (ShaderResourceType)file->ReadUByte();
+        unsigned slot = file->ReadUByte();
+        unsigned count = file->ReadUByte();
+        unsigned size = file->ReadUInt();
+
+        ShaderResource resource(type, name, slot, count, size);
+        resources_[StringHash(name)] = resource;
+    }
 
     unsigned numParameters = file->ReadUInt();
     for (unsigned i = 0; i < numParameters; ++i)
@@ -443,36 +457,94 @@ void ShaderVariation::ParseParameters(unsigned char* bufData, unsigned bufSize)
         elementHash_ <<= 32;
     }
 
-    HashMap<String, unsigned> cbRegisterMap;
-
+    // Resources (samplers, textures, buffers ...)
     for (unsigned i = 0; i < shaderDesc.BoundResources; ++i)
     {
         D3D11_SHADER_INPUT_BIND_DESC resourceDesc;
         reflection->GetResourceBindingDesc(i, &resourceDesc);
-        String resourceName(resourceDesc.Name);
-        if (resourceDesc.Type == D3D_SIT_CBUFFER)
-            cbRegisterMap[resourceName] = resourceDesc.BindPoint;
-        else if (resourceDesc.Type == D3D_SIT_SAMPLER && resourceDesc.BindPoint < MAX_TEXTURE_UNITS)
-            useTextureUnit_[resourceDesc.BindPoint] = true;
+
+        ShaderResource resource;
+        resource.name_ = String(resourceDesc.Name);
+        resource.bindSlot_ = resourceDesc.BindPoint;
+        resource.bindCount_ = resourceDesc.BindCount;
+
+        if (resource.bindCount_ != 1)
+            URHO3D_LOGERROR("Shader resource '" + resource.name_ + "' contiguous bind points is not supported");
+
+        switch (resourceDesc.Type)
+        {
+        case D3D_SIT_CBUFFER:
+            resource.type_ = SR_CBV;
+            break;
+
+        case D3D_SIT_TEXTURE:
+            // Skip, textures are managed with samplers
+            continue;
+
+        case D3D_SIT_SAMPLER:
+            resource.type_ = SR_SAMPLERS;
+            if (resource.bindSlot_ >= MAX_TEXTURE_UNITS)
+                continue;
+            useTextureUnit_[resource.bindSlot_] = true;
+            break;
+
+        case D3D_SIT_STRUCTURED:
+        case D3D_SIT_BYTEADDRESS:
+            resource.type_ = SR_SRV;
+            if (resource.bindSlot_ >= MAX_TEXTURE_UNITS)
+                continue;
+            break;
+
+        case D3D_SIT_UAV_RWSTRUCTURED:
+        case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+        case D3D_SIT_UAV_RWBYTEADDRESS:
+            resource.type_ = SR_UAV_STRUCTURED;
+            if (resource.bindSlot_ >= MAX_SHADER_UAV)
+                continue;
+            break;
+
+        case D3D_SIT_UAV_RWTYPED:
+            resource.type_ = SR_UAV_TYPED;
+            if (resource.bindSlot_ >= MAX_SHADER_UAV)
+                continue;
+            break;
+
+        default:
+            URHO3D_LOGERROR("Unsupported shader resource '" + resource.name_ + "'"
+                            " of type " + String((int)resourceDesc.Type));
+            continue;
+        }
+
+        resources_[resource.name_] = resource;
     }
 
+    // Only buffers
     for (unsigned i = 0; i < shaderDesc.ConstantBuffers; ++i)
     {
         ID3D11ShaderReflectionConstantBuffer* cb = reflection->GetConstantBufferByIndex(i);
         D3D11_SHADER_BUFFER_DESC cbDesc;
         cb->GetDesc(&cbDesc);
-        unsigned cbRegister = cbRegisterMap[String(cbDesc.Name)];
+
+        HashMap<StringHash, ShaderResource>::Iterator r = resources_.Find(String(cbDesc.Name));
+        if (r == resources_.End())
+            continue;
+        ShaderResource& resource = r->second_;
 
         for (unsigned j = 0; j < cbDesc.Variables; ++j)
         {
             ID3D11ShaderReflectionVariable* var = cb->GetVariableByIndex(j);
             D3D11_SHADER_VARIABLE_DESC varDesc;
             var->GetDesc(&varDesc);
-            String varName(varDesc.Name);
-            if (varName[0] == 'c')
+            resource.size_ += varDesc.Size;
+            if (resource.type_ == SR_CBV)
             {
-                varName = varName.Substring(1); // Strip the c to follow Urho3D constant naming convention
-                parameters_[varName] = ShaderParameter(type_, varName, cbRegister, varDesc.StartOffset, varDesc.Size);
+                String varName(varDesc.Name);
+                if (varName[0] == 'c')
+                {
+                    varName = varName.Substring(1); // Strip the c to follow Urho3D constant naming convention
+                    parameters_[varName] = ShaderParameter(type_, varName, resource.bindSlot_,
+                                                           varDesc.StartOffset, varDesc.Size);
+                }
             }
         }
     }
@@ -496,8 +568,18 @@ void ShaderVariation::SaveByteCode(const String& binaryShaderName)
 
     file->WriteFileID("USHD");
     file->WriteShort((unsigned short)type_);
-    file->WriteShort(4);
+    file->WriteShort(5);
     file->WriteUInt(elementHash_ >> 32);
+
+    file->WriteUInt(resources_.Size());
+    for (HashMap<StringHash, ShaderResource>::ConstIterator i = resources_.Begin(); i != resources_.End(); ++i)
+    {
+        file->WriteString(i->second_.name_);
+        file->WriteUByte((unsigned char)i->second_.type_);
+        file->WriteUByte((unsigned char)i->second_.bindSlot_);
+        file->WriteUByte((unsigned char)i->second_.bindCount_);
+        file->WriteUInt(i->second_.size_);
+    }
 
     file->WriteUInt(parameters_.Size());
     for (HashMap<StringHash, ShaderParameter>::ConstIterator i = parameters_.Begin(); i != parameters_.End(); ++i)
@@ -531,17 +613,26 @@ void ShaderVariation::SaveByteCode(const String& binaryShaderName)
 
 void ShaderVariation::CalculateConstantBufferSizes()
 {
-    for (unsigned i = 0; i < MAX_SHADER_PARAMETER_GROUPS; ++i)
-        constantBufferSizes_[i] = 0;
+    unsigned constantBufferSizes[MAX_SHADER_PARAMETER_GROUPS];
+    memset(constantBufferSizes, 0, sizeof constantBufferSizes);
 
     for (HashMap<StringHash, ShaderParameter>::ConstIterator i = parameters_.Begin(); i != parameters_.End(); ++i)
     {
         if (i->second_.buffer_ < MAX_SHADER_PARAMETER_GROUPS)
         {
-            unsigned oldSize = constantBufferSizes_[i->second_.buffer_];
+            unsigned oldSize = constantBufferSizes[i->second_.buffer_];
             unsigned paramEnd = i->second_.offset_ + i->second_.size_;
             if (paramEnd > oldSize)
-                constantBufferSizes_[i->second_.buffer_] = paramEnd;
+                constantBufferSizes[i->second_.buffer_] = paramEnd;
+        }
+    }
+
+    for (HashMap<StringHash, ShaderResource>::Iterator i = resources_.Begin(); i != resources_.End(); ++i)
+    {
+        ShaderResource& resource = i->second_;
+        if (resource.type_ == SR_CBV)
+        {
+            resource.size_ = constantBufferSizes[resource.bindSlot_];
         }
     }
 }

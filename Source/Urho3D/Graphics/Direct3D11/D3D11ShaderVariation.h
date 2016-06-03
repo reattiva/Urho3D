@@ -72,6 +72,40 @@ struct ShaderParameter
     ConstantBuffer* bufferPtr_;
 };
 
+/// %Shader resource definition.
+struct ShaderResource
+{
+    /// Construct with defaults.
+    ShaderResource() :
+        type_(SR_SRV),
+        bindSlot_(0),
+        bindCount_(0),
+        size_(0)
+    {
+    }
+
+    /// Construct with parameters.
+    ShaderResource(ShaderResourceType type, const String& name, unsigned slot, unsigned count, unsigned size) :
+        type_(type),
+        name_(name),
+        bindSlot_(slot),
+        bindCount_(count),
+        size_(size)
+    {
+    }
+
+    /// Type of data in the resource.
+    ShaderResourceType type_;
+    /// Name of the shader resource.
+    String name_;
+    /// Starting bind slot.
+    unsigned bindSlot_;
+    /// Number of contiguous bind slots occupied.
+    unsigned bindCount_;
+    /// Element size in bytes for buffers.
+    unsigned size_;
+};
+
 /// Vertex or pixel shader on the GPU.
 class URHO3D_API ShaderVariation : public RefCounted, public GPUObject
 {
@@ -111,6 +145,9 @@ public:
 
     /// Return whether uses a texture unit (only for pixel shaders.)
     bool HasTextureUnit(TextureUnit unit) const { return useTextureUnit_[unit]; }
+
+    /// Return shader resources.
+    const HashMap<StringHash, ShaderResource>& GetResources() const { return resources_; }
 
     /// Return all parameter definitions.
     const HashMap<StringHash, ShaderParameter>& GetParameters() const { return parameters_; }
@@ -154,6 +191,8 @@ private:
     ShaderType type_;
     /// Vertex element hash for vertex shaders. Zero for pixel shaders. Note that hashing is different than vertex buffers.
     unsigned long long elementHash_;
+    /// Shader resources.
+    HashMap<StringHash, ShaderResource> resources_;
     /// Shader parameters.
     HashMap<StringHash, ShaderParameter> parameters_;
     /// Texture unit use flags.
