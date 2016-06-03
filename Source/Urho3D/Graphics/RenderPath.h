@@ -271,6 +271,10 @@ public:
     /// Return number of commands.
     unsigned GetNumCommands() const { return commands_.Size(); }
 
+    /// Return command index by tag name, or M_MAX_UNSIGNED if does not exist.
+    unsigned GetCommandIndex(const String& tag) const;
+    /// Return command by tag name, or null if does not exist.
+    RenderPathCommand* GetCommand(const String& tag) { return GetCommand(GetCommandIndex(tag)); }
     /// Return command at index, or null if does not exist.
     RenderPathCommand* GetCommand(unsigned index) { return index < commands_.Size() ? &commands_[index] : (RenderPathCommand*)0; }
 

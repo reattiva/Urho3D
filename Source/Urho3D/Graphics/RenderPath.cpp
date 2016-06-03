@@ -368,7 +368,7 @@ bool RenderPath::Append(XMLFile* file)
         RenderPathCommand cmd;
         cmd.Load(cmdElem);
         if (cmd.type_ != CMD_NONE)
-            commands_.Push(cmd);
+            AddCommand(cmd);
 
         cmdElem = cmdElem.GetNext("command");
     }
@@ -473,8 +473,18 @@ void RenderPath::RemoveCommands(const String& tag)
     for (unsigned i = commands_.Size() - 1; i < commands_.Size(); --i)
     {
         if (!commands_[i].tag_.Compare(tag, false))
-            commands_.Erase(i);
+            RemoveCommand(i);
     }
+}
+
+unsigned RenderPath::GetCommandIndex(const String &tag) const
+{
+    for (unsigned i = 0; i < commands_.Size(); ++i)
+    {
+        if (!commands_[i].tag_.Compare(tag, false))
+            return i;
+    }
+    return M_MAX_UNSIGNED;
 }
 
 void RenderPath::SetShaderParameter(const String& name, const Variant& value)
