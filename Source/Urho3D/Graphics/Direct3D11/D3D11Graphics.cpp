@@ -212,6 +212,19 @@ static HWND GetWindowHandle(SDL_Window* window)
     return sysInfo.info.win.window;
 }
 
+static void SetDirtyEnds(unsigned slot, unsigned& first, unsigned& last)
+{
+    if (first == M_MAX_UNSIGNED)
+        first = last = slot;
+    else
+    {
+        if (slot < first)
+            first = slot;
+        if (slot > last)
+            last = slot;
+    }
+}
+
 const Vector2 Graphics::pixelUVOffset(0.0f, 0.0f);
 
 Graphics::Graphics(Context* context) :
@@ -956,16 +969,7 @@ bool Graphics::SetVertexBuffers(const PODVector<VertexBuffer*>& buffers, unsigne
         if (changed)
         {
             vertexDeclarationDirty_ = true;
-
-            if (firstDirtyVB_ == M_MAX_UNSIGNED)
-                firstDirtyVB_ = lastDirtyVB_ = i;
-            else
-            {
-                if (i < firstDirtyVB_)
-                    firstDirtyVB_ = i;
-                if (i > lastDirtyVB_)
-                    lastDirtyVB_ = i;
-            }
+            SetDirtyEnds(i, firstDirtyVB_, lastDirtyVB_);
         }
     }
 
@@ -1407,15 +1411,7 @@ void Graphics::SetTexture(unsigned index, Texture* texture)
 
     if (texture != textures_[index])
     {
-        if (firstDirtyTexture_ == M_MAX_UNSIGNED)
-            firstDirtyTexture_ = lastDirtyTexture_ = index;
-        else
-        {
-            if (index < firstDirtyTexture_)
-                firstDirtyTexture_ = index;
-            if (index > lastDirtyTexture_)
-                lastDirtyTexture_ = index;
-        }
+        SetDirtyEnds(index, firstDirtyTexture_, lastDirtyTexture_);
 
         textures_[index] = texture;
         impl_->shaderResourceViews_[index] = texture ? (ID3D11ShaderResourceView*)texture->GetShaderResourceView() : 0;
