@@ -227,6 +227,8 @@ public:
     IntRect GetIntRect(const String& name) const;
     /// Return an IntVector2 attribute, or default if missing.
     IntVector2 GetIntVector2(const String& name) const;
+    /// Return an UInt array attribute
+    unsigned GetUIntArray(const String& name, unsigned* array, unsigned arraySize) const;
     /// Return a Rect attribute, or default if missing.
     Rect GetRect(const String& name) const;
     /// Return a quaternion attribute, or default if missing.

@@ -221,6 +221,27 @@ IntVector2 ToIntVector2(const char* source)
     return ret;
 }
 
+unsigned ToUIntArray(const String& source, unsigned* array, unsigned arraySize)
+{
+    return ToUIntArray(source.CString(), array, arraySize);
+}
+
+unsigned ToUIntArray(const char* source, unsigned* array, unsigned arraySize)
+{
+    unsigned elements = CountElements(source, ' ');
+    char* ptr = (char*)source;
+
+    for (unsigned i = 0; i < arraySize; ++i)
+    {
+        if (i < elements)
+            array[i] = (unsigned)strtoul(ptr, &ptr, 10);
+        else
+            array[i] = 0;
+    }
+
+    return elements;
+}
+
 Rect ToRect(const String& source)
 {
     return ToRect(source.CString());

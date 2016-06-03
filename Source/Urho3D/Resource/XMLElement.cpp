@@ -766,6 +766,11 @@ IntVector2 XMLElement::GetIntVector2(const String& name) const
     return ToIntVector2(GetAttribute(name));
 }
 
+unsigned XMLElement::GetUIntArray(const String& name, unsigned* array, unsigned arraySize) const
+{
+    return ToUIntArray(GetAttribute(name), array, arraySize);
+}
+
 Quaternion XMLElement::GetQuaternion(const String& name) const
 {
     return ToQuaternion(GetAttribute(name));

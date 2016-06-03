@@ -59,6 +59,10 @@ URHO3D_API IntRect ToIntRect(const char* source);
 URHO3D_API IntVector2 ToIntVector2(const String& source);
 /// Parse an IntVector2 from a C string.
 URHO3D_API IntVector2 ToIntVector2(const char* source);
+/// Parse an array of unsigned int from a string.
+URHO3D_API unsigned ToUIntArray(const String& source, unsigned* array, unsigned arraySize);
+/// Parse an array of unsigned int from a C string.
+URHO3D_API unsigned ToUIntArray(const char* source, unsigned* array, unsigned arraySize);
 /// Parse a Quaternion from a string. If only 3 components specified, convert Euler angles (degrees) to quaternion.
 URHO3D_API Quaternion ToQuaternion(const String& source);
 /// Parse a Quaternion from a C string. If only 3 components specified, convert Euler angles (degrees) to quaternion.
