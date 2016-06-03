@@ -63,4 +63,10 @@ URHO3D_EVENT(E_ENDFRAME, EndFrame)
 {
 }
 
+/// Command event.
+URHO3D_EVENT(E_COMMANDEVENT, CommandEvent)
+{
+    URHO3D_PARAM(P_COMMANDINDEX, CommandIndex);    // unsigned
+}
+
 }

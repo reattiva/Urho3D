@@ -24,6 +24,7 @@
 
 #include "../Core/Profiler.h"
 #include "../Core/WorkQueue.h"
+#include "../Core/CoreEvents.h"
 #include "../Graphics/Camera.h"
 #include "../Graphics/DebugRenderer.h"
 #include "../Graphics/Geometry.h"
@@ -1664,6 +1665,36 @@ void View::ExecuteRenderPathCommands()
                 }
                 break;
 
+            case CMD_COMPUTE:
+                {
+                    URHO3D_PROFILE(ComputeCommand);
+
+                    SetShaders(command);
+                    Compute(command);
+
+                    // Command custom event
+                    /*if (command.flags_ & FLAG_SEND_COMMANDEVENT)
+                    {
+                        using namespace CommandEvent;
+
+                        VariantMap& eventData = GetEventDataMap();
+                        eventData[P_COMMANDINDEX] = i;
+                        SendEvent(E_COMMANDEVENT, eventData);
+                    }*/
+                }
+                break;
+
+            case CMD_EVENT:
+                {
+                    URHO3D_PROFILE(ComputeCommand);
+
+                    using namespace CommandEvent;
+                    VariantMap& eventData = GetEventDataMap();
+                    eventData[P_COMMANDINDEX] = i;
+                    SendEvent(E_COMMANDEVENT, eventData);
+                }
+                break;
+
             default:
                 break;
             }
@@ -1782,6 +1813,47 @@ bool View::SetTextures(RenderPathCommand& command)
     }
 
     return allowDepthWrite;
+}
+
+void View::SetShaders(RenderPathCommand& command)
+{
+    ShaderVariation* vs = 0;
+    ShaderVariation* ps = 0;
+    ShaderVariation* gs = 0;
+    ShaderVariation* cs = 0;
+
+    if (!command.vertexShaderName_.Empty() && !command.pixelShaderName_.Empty())
+    {
+        vs = graphics_->GetShader(VS, command.vertexShaderName_, command.vertexShaderDefines_);
+        ps = graphics_->GetShader(PS, command.pixelShaderName_, command.pixelShaderDefines_);
+        // If shader can not be found, clear it from the command to prevent redundant attempts
+        if (!vs)
+            command.vertexShaderName_ = String::EMPTY;
+        if (!ps)
+            command.pixelShaderName_ = String::EMPTY;
+    }
+
+    if (!command.geometryShaderName_.Empty())
+    {
+        gs = graphics_->GetShader(GS, command.geometryShaderName_, command.geometryShaderDefines_);
+        if (!gs)
+            command.geometryShaderName_ = String::EMPTY;
+    }
+
+    if (!command.computeShaderName_.Empty())
+    {
+        cs = graphics_->GetShader(CS, command.computeShaderName_, command.computeShaderDefines_);
+        if (!cs)
+            command.computeShaderName_ = String::EMPTY;
+    }
+
+    // Set shaders
+    graphics_->SetShaders(vs, ps, gs, cs);
+}
+
+void View::Compute(RenderPathCommand& command)
+{
+    graphics_->Compute(command.computeGroups_[0], command.computeGroups_[1], command.computeGroups_[2]);
 }
 
 void View::RenderQuad(RenderPathCommand& command)

@@ -46,6 +46,8 @@ static const char* commandTypeNames[] =
     "forwardlights",
     "lightvolumes",
     "renderui",
+    "compute",
+    "event",
     0
 };
 
@@ -180,6 +182,23 @@ void RenderPathCommand::Load(const XMLElement& element)
                 parameterElem = parameterElem.GetNext("parameter");
             }
         }
+        break;
+
+    case CMD_COMPUTE:
+    case CMD_EVENT:
+        computeShaderName_ = element.GetAttribute("cs");
+        computeShaderDefines_ = element.GetAttribute("csdefines");
+
+        if (element.HasAttribute("groups"))
+            element.GetUIntArray("groups", computeGroups_, 3);
+
+        /*if (element.HasAttribute("flags"))
+        {
+            flags_ = 0;
+            Vector<String> flags = element.GetAttribute("flags").ToLower().Split(' ');
+            if (flags.Contains("commandevent"))
+                flags_ |= FLAG_SEND_COMMANDEVENT;
+        }*/
         break;
 
     default:

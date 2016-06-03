@@ -205,6 +205,10 @@ private:
     void SetRenderTargets(RenderPathCommand& command);
     /// Set textures for current render command. Return whether depth write is allowed (depth-stencil not bound as a texture.)
     bool SetTextures(RenderPathCommand& command);
+    /// Set shaders for current render command.
+    void SetShaders(RenderPathCommand& command);
+    /// Perform a compute command.
+    void Compute(RenderPathCommand& command);
     /// Perform a quad rendering command.
     void RenderQuad(RenderPathCommand& command);
     /// Check if a command is enabled and has content to render. To be called only after render update has completed for the frame.

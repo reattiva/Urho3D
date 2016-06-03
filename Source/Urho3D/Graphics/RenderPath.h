@@ -43,7 +43,9 @@ enum RenderCommandType
     CMD_QUAD,
     CMD_FORWARDLIGHTS,
     CMD_LIGHTVOLUMES,
-    CMD_RENDERUI
+    CMD_RENDERUI,
+    CMD_COMPUTE,
+    CMD_EVENT
 };
 
 /// Rendering path sorting modes.
@@ -59,6 +61,12 @@ enum RenderTargetSizeMode
     SIZE_ABSOLUTE = 0,
     SIZE_VIEWPORTDIVISOR,
     SIZE_VIEWPORTMULTIPLIER
+};
+
+/// Command flags
+enum CommandFlags
+{
+    FLAG_SEND_COMMANDEVENT = 0x0001
 };
 
 /// Rendertarget definition.
@@ -112,8 +120,10 @@ struct URHO3D_API RenderPathCommand
         useFogColor_(false),
         markToStencil_(false),
         useLitBase_(true),
-        vertexLights_(false)
+        vertexLights_(false),
+        flags_(0)
     {
+        computeGroups_[0] = computeGroups_[1] = computeGroups_[2] = 1;
     }
 
     /// Read from an XML element.
@@ -169,12 +179,16 @@ struct URHO3D_API RenderPathCommand
     String pixelShaderName_;
     /// Geometry shader name.
     String geometryShaderName_;
+    /// Compute shader name.
+    String computeShaderName_;
     /// Vertex shader defines.
     String vertexShaderDefines_;
     /// Pixel shader defines.
     String pixelShaderDefines_;
     /// Geometry shader defines.
     String geometryShaderDefines_;
+    /// Compute shader defines.
+    String computeShaderDefines_;
     /// Textures.
     String textureNames_[MAX_TEXTURE_UNITS];
     /// %Shader parameters.
@@ -203,6 +217,10 @@ struct URHO3D_API RenderPathCommand
     bool useLitBase_;
     /// Vertex lights flag.
     bool vertexLights_;
+    /// Command flags
+    unsigned flags_;
+    /// Compute groups to dispatch.
+    unsigned computeGroups_[3];
 };
 
 /// Rendering path definition.
