@@ -2564,6 +2564,11 @@ void Graphics::ResetCachedState()
         impl_->samplers_[i] = 0;
     }
 
+    for (unsigned i = 0; i < MAX_SHADER_UAV; ++i)
+    {
+        impl_->unorderedAccessViews_[i] = 0;
+    }
+
     for (unsigned i = 0; i < MAX_RENDERTARGETS; ++i)
     {
         renderTargets_[i] = 0;
@@ -2621,6 +2626,7 @@ void Graphics::ResetCachedState()
     depthStateHash_ = M_MAX_UNSIGNED;
     rasterizerStateHash_ = M_MAX_UNSIGNED;
     firstDirtyTexture_ = lastDirtyTexture_ = M_MAX_UNSIGNED;
+    firstDirtyUav_ = lastDirtyUav_ = M_MAX_UNSIGNED;
     firstDirtyVB_ = lastDirtyVB_ = M_MAX_UNSIGNED;
     dirtyConstantBuffers_.Clear();
 }

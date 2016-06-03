@@ -738,6 +738,10 @@ private:
     unsigned firstDirtyTexture_;
     /// Last dirtied texture unit.
     unsigned lastDirtyTexture_;
+    /// First dirtied unordered access view.
+    unsigned firstDirtyUav_;
+    /// Last dirtied unordered access view.
+    unsigned lastDirtyUav_;
     /// First dirtied vertex buffer.
     unsigned firstDirtyVB_;
     /// Last dirtied vertex buffer.

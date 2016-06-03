@@ -88,6 +88,8 @@ private:
     ID3D11ShaderResourceView* shaderResourceViews_[MAX_TEXTURE_UNITS];
     /// Bound sampler state objects.
     ID3D11SamplerState* samplers_[MAX_TEXTURE_UNITS];
+    /// Bound unordered access views (UAV).
+    ID3D11UnorderedAccessView* unorderedAccessViews_[MAX_SHADER_UAV];
     /// Bound vertex buffers.
     ID3D11Buffer* vertexBuffers_[MAX_VERTEX_STREAMS];
     /// Bound constant buffers.
