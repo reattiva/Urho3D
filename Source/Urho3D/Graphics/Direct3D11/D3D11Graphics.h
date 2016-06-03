@@ -44,6 +44,7 @@ class GPUObject;
 class GraphicsImpl;
 class RenderSurface;
 class Shader;
+class ShaderBuffer;
 class ShaderPrecache;
 class ShaderProgram;
 class ShaderVariation;
@@ -513,6 +514,10 @@ public:
     void CleanUpShaderPrograms(ShaderVariation* variation);
     /// Get or create a constant buffer. Will be shared between shaders if possible.
     ConstantBuffer* GetOrCreateConstantBuffer(ShaderType type, unsigned index, unsigned size);
+    /// Add a ShaderBuffer to be accessible by shaders.
+    void AddShaderBuffer(StringHash bufferName, ShaderBuffer* buffer);
+    /// Get a ShaderBuffer by name.
+    ShaderBuffer* GetShaderBuffer(StringHash bufferName);
 
     /// Return the API-specific alpha texture format.
     static unsigned GetAlphaFormat();
@@ -745,6 +750,8 @@ private:
     HashMap<unsigned, SharedPtr<ConstantBuffer> > constantBuffers_;
     /// Currently dirty constant buffers.
     PODVector<ConstantBuffer*> dirtyConstantBuffers_;
+    /// Shader buffers.
+    HashMap<StringHash, SharedPtr<ShaderBuffer> > shaderBuffers_;
     /// Shader programs.
     ShaderProgramMap shaderPrograms_;
     /// Shader program in use.

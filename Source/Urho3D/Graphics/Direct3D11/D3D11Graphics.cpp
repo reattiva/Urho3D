@@ -282,6 +282,7 @@ Graphics::~Graphics()
 
     vertexDeclarations_.Clear();
     constantBuffers_.Clear();
+    shaderBuffers_.Clear();
 
     for (HashMap<unsigned, ID3D11BlendState*>::Iterator i = impl_->blendStates_.Begin(); i != impl_->blendStates_.End(); ++i)
     {
@@ -2133,6 +2134,20 @@ ConstantBuffer* Graphics::GetOrCreateConstantBuffer(ShaderType type, unsigned in
         constantBuffers_[key] = newConstantBuffer;
         return newConstantBuffer.Get();
     }
+}
+
+void Graphics::AddShaderBuffer(StringHash bufferName, ShaderBuffer* buffer)
+{
+    shaderBuffers_[bufferName] = buffer;
+}
+
+ShaderBuffer* Graphics::GetShaderBuffer(StringHash bufferName)
+{
+    HashMap<StringHash, SharedPtr<ShaderBuffer> >::Iterator i = shaderBuffers_.Find(bufferName);
+    if (i != shaderBuffers_.End())
+        return i->second_.Get();
+    else
+        return 0;
 }
 
 unsigned Graphics::GetAlphaFormat()
