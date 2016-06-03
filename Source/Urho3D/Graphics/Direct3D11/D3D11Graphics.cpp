@@ -2120,20 +2120,34 @@ void Graphics::CleanUpShaderPrograms(ShaderVariation* variation)
         shaderProgram_ = 0;
 }
 
-ConstantBuffer* Graphics::GetOrCreateConstantBuffer(ShaderType type, unsigned index, unsigned size)
+ConstantBuffer* Graphics::GetOrCreateConstantBuffer(ShaderType type, StringHash name, const ShaderResource* resource)
 {
+    if (!resource)
+        return 0;
+
     // Ensure that different shader types and index slots get unique buffers, even if the size is same
-    unsigned key = type | (index << 1) | (size << 4);
+    assert(MAX_SHADER_TYPE <= 4);
+    unsigned key = type | (resource->bindSlot_ << 2) | (resource->size_ << 5);
     HashMap<unsigned, SharedPtr<ConstantBuffer> >::Iterator i = constantBuffers_.Find(key);
     if (i != constantBuffers_.End())
         return i->second_.Get();
-    else
+
+    // However is the name is the same, get the same buffer (the penalty is the same as creating a unique
+    // buffer for each stage)
+    HashMap<StringHash, unsigned>::Iterator j = constantBuffersKeys_.Find(name);
+    if (j != constantBuffersKeys_.End())
     {
-        SharedPtr<ConstantBuffer> newConstantBuffer(new ConstantBuffer(context_));
-        newConstantBuffer->SetSize(size);
-        constantBuffers_[key] = newConstantBuffer;
-        return newConstantBuffer.Get();
+        key = j->second_;
+        i = constantBuffers_.Find(key);
+        if (i != constantBuffers_.End())
+            return i->second_.Get();
     }
+
+    SharedPtr<ConstantBuffer> newConstantBuffer(new ConstantBuffer(context_));
+    newConstantBuffer->SetSize(resource->size_);
+    constantBuffersKeys_[name] = key;
+    constantBuffers_[key] = newConstantBuffer;
+    return newConstantBuffer.Get();
 }
 
 void Graphics::AddShaderBuffer(StringHash bufferName, ShaderBuffer* buffer)

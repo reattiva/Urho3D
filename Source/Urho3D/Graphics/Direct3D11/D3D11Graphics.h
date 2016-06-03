@@ -513,7 +513,7 @@ public:
     /// Clean up shader parameters when a shader variation is released or destroyed.
     void CleanUpShaderPrograms(ShaderVariation* variation);
     /// Get or create a constant buffer. Will be shared between shaders if possible.
-    ConstantBuffer* GetOrCreateConstantBuffer(ShaderType type, unsigned index, unsigned size);
+    ConstantBuffer* GetOrCreateConstantBuffer(ShaderType type, StringHash name, const ShaderResource* resource);
     /// Add a ShaderBuffer to be accessible by shaders.
     void AddShaderBuffer(StringHash bufferName, ShaderBuffer* buffer);
     /// Get a ShaderBuffer by name.
@@ -746,6 +746,8 @@ private:
     TextureFilterMode defaultTextureFilterMode_;
     /// Vertex declarations.
     HashMap<unsigned long long, SharedPtr<VertexDeclaration> > vertexDeclarations_;
+    /// Constant buffers name to key map.
+    HashMap<StringHash, unsigned> constantBuffersKeys_;
     /// Constant buffers.
     HashMap<unsigned, SharedPtr<ConstantBuffer> > constantBuffers_;
     /// Currently dirty constant buffers.

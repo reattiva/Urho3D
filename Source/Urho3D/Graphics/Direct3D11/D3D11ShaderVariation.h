@@ -164,9 +164,6 @@ public:
     /// Return compile error/warning string.
     const String& GetCompilerOutput() const { return compilerOutput_; }
 
-    /// Return constant buffer data sizes.
-    const unsigned* GetConstantBufferSizes() const { return &constantBufferSizes_[0]; }
-
     /// Return defines with the CLIPPLANE define appended. Used internally on D3D11 only.
     const String& GetDefinesClipPlane() { return definesClipPlane_; }
 
