@@ -305,6 +305,9 @@ bool ShaderVariation::Compile()
     const char* entryPoint = 0;
     const char* profile = 0;
     unsigned flags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+#if defined(URHO3D_D3D11_DEBUG)
+    flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
 
     defines.Push("D3D11");
 
