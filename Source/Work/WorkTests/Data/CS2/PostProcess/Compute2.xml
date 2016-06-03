@@ -1,0 +1,8 @@
+<renderpath>
+    <command type="event" cs="Circles" output="">
+        <texture unit="diffuse" name="viewport" />
+    </command>
+    <command type="quad" vs="CopyFramebuffer" ps="CopyFramebuffer" output="viewport">
+        <texture unit="diffuse" name="viewport" />
+    </command>
+</renderpath>

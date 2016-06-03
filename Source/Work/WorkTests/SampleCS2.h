@@ -19,6 +19,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+// Based on "Compute Shader Filters" by Marco Alamia:
+// http://www.codinglabs.net/tutorial_compute_shaders_filters.aspx
+//
 
 #pragma once
 
@@ -26,25 +29,26 @@
 
 namespace Urho3D
 {
-
 class Node;
 class Scene;
-
+class ShaderBuffer;
 }
 
-/// Geometry shader example.
-class SampleGS : public Sample
+/// Compute shader example.
+class SampleCS2 : public Sample
 {
-    URHO3D_OBJECT(SampleGS, Sample)
+    URHO3D_OBJECT(SampleCS2, Sample)
 
 public:
     /// Construct.
-    SampleGS(Context* context);
+    SampleCS2(Context* context);
 
     /// Setup after engine initialization and before running the main loop.
     virtual void Start();
 
 private:
+    void CreateLog();
+    void Log(const String& text, bool clear = false);
     /// Construct the scene content.
     void CreateScene();
     /// Set up a viewport for displaying the scene.
@@ -59,7 +63,17 @@ private:
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle the post-render update event.
     void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
+    /// Handle the command event.
+    void HandleCommandEvent(StringHash eventType, VariantMap& eventData);
 
     /// Flag for drawing debug geometry.
     bool drawDebug_;
+
+    Text* debugText_;
+    SharedPtr<ShaderBuffer> bufferIn0_;
+    SharedPtr<ShaderBuffer> bufferOut_;
+    SharedPtr<ShaderBuffer> bufferRead_;
+
+    bool paramatersDirty_;
+    Color circleColor_;
 };

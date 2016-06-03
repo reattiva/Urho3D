@@ -19,6 +19,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+// Based on Microsoft's "Basic compute example" (MIT licensed):
+// https://github.com/walbourn/directx-sdk-samples/tree/master/BasicCompute11
+// https://code.msdn.microsoft.com/windowsdesktop/DirectCompute-Basic-Win32-7d5a7408
+//
 
 #pragma once
 
@@ -26,40 +30,41 @@
 
 namespace Urho3D
 {
-
 class Node;
 class Scene;
-
+class Text;
+class ShaderBuffer;
 }
 
-/// Geometry shader example.
-class SampleGS : public Sample
+/// Compute shader example:
+/// structured buffers for reading and writing, compute command, event command,
+/// compute on event.
+class SampleCS : public Sample
 {
-    URHO3D_OBJECT(SampleGS, Sample)
+    URHO3D_OBJECT(SampleCS, Sample)
 
 public:
     /// Construct.
-    SampleGS(Context* context);
+    SampleCS(Context* context);
 
     /// Setup after engine initialization and before running the main loop.
     virtual void Start();
 
 private:
-    /// Construct the scene content.
-    void CreateScene();
+    void Init();
     /// Set up a viewport for displaying the scene.
     void SetupViewport();
     /// Subscribe to application-wide logic update and post-render update events.
     void SubscribeToEvents();
-    /// Read input and moves the camera.
-    void MoveCamera(float timeStep);
-    /// Animate the scene.
-    void AnimateScene(float timeStep);
-    /// Handle the logic update event.
-    void HandleUpdate(StringHash eventType, VariantMap& eventData);
-    /// Handle the post-render update event.
-    void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
+    ///
+    void CreateText();
+    void PrintText(const String& text);
+    /// Handle the command event.
+    void HandleCommandEvent(StringHash eventType, VariantMap& eventData);
 
-    /// Flag for drawing debug geometry.
-    bool drawDebug_;
+    Text* debugText_;
+    SharedPtr<ShaderBuffer> bufferIn0_;
+    SharedPtr<ShaderBuffer> bufferIn1_;
+    SharedPtr<ShaderBuffer> bufferOut_;
+
 };
