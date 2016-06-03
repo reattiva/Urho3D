@@ -150,6 +150,9 @@ public:
     /// Return the rendertarget. 0 if using the backbuffer.
     RenderSurface* GetRenderTarget() const { return renderTarget_; }
 
+    /// Return the current viewport texture.
+    Texture* GetCurrentViewportTexture() const { return currentViewportTexture_; }
+
     /// Return whether should draw debug geometry.
     bool GetDrawDebug() const { return drawDebug_; }
 
