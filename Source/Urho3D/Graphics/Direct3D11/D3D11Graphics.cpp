@@ -1522,6 +1522,15 @@ void Graphics::SetRenderTarget(unsigned index, Texture2D* texture)
     SetRenderTarget(index, renderTarget);
 }
 
+void Graphics::SetDepthStencilEnabled(bool enabled)
+{
+    if (depthStencilEnabled_ != enabled)
+    {
+        depthStencilEnabled_ = enabled;
+        renderTargetsDirty_ = true;
+    }
+}
+
 void Graphics::SetDepthStencil(RenderSurface* depthStencil)
 {
     if (depthStencil != depthStencil_)
@@ -2690,6 +2699,7 @@ void Graphics::ResetCachedState()
     textureAnisotropy_ = 1;
     colorWrite_ = true;
     cullMode_ = CULL_CCW;
+    depthStencilEnabled_ = true;
     constantDepthBias_ = 0.0f;
     slopeScaledDepthBias_ = 0.0f;
     depthTestMode_ = CMP_LESSEQUAL;
@@ -2749,7 +2759,7 @@ void Graphics::PrepareDraw()
 {
     if (renderTargetsDirty_)
     {
-        impl_->depthStencilView_ =
+        impl_->depthStencilView_ = !depthStencilEnabled_ ? 0 :
             (depthStencil_ && depthStencil_->GetUsage() == TEXTURE_DEPTHSTENCIL) ?
                 (ID3D11DepthStencilView*)depthStencil_->GetRenderTargetView() : impl_->defaultDepthStencilView_;
 

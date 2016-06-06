@@ -249,6 +249,8 @@ public:
     void SetRenderTarget(unsigned index, RenderSurface* renderTarget);
     /// Set rendertarget.
     void SetRenderTarget(unsigned index, Texture2D* texture);
+    /// Set Depth Stencil enabled flag.
+    void SetDepthStencilEnabled(bool enabled);
     /// Set depth-stencil surface.
     void SetDepthStencil(RenderSurface* depthStencil);
     /// Set depth-stencil surface.
@@ -682,6 +684,8 @@ private:
     bool colorWrite_;
     /// Hardware culling mode.
     CullMode cullMode_;
+    /// Depth Stencil enabled flag.
+    bool depthStencilEnabled_;
     /// Depth constant bias.
     float constantDepthBias_;
     /// Depth slope scaled bias.

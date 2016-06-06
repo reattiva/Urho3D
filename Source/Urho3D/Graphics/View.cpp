@@ -1757,7 +1757,10 @@ void View::SetRenderTargets(RenderPathCommand& command)
         ++index;
     }
 
-    if (command.depthStencilName_.Length())
+    bool depthStencilEnabled = command.depthStencilName_.Compare("none", true) != 0;
+    graphics_->SetDepthStencilEnabled(depthStencilEnabled);
+
+    if (depthStencilEnabled && command.depthStencilName_.Length())
     {
         Texture* depthTexture = FindNamedTexture(command.depthStencilName_, true, false);
         if (depthTexture)
@@ -1773,7 +1776,7 @@ void View::SetRenderTargets(RenderPathCommand& command)
     IntRect viewport = (useViewportOutput && currentRenderTarget_ == renderTarget_) ? viewRect_ : IntRect(0, 0, rtSizeNow.x_,
         rtSizeNow.y_);
 
-    if (!useCustomDepth)
+    if (depthStencilEnabled && !useCustomDepth)
         graphics_->SetDepthStencil(GetDepthStencil(graphics_->GetRenderTarget(0)));
     graphics_->SetViewport(viewport);
     graphics_->SetColorWrite(useColorWrite);
