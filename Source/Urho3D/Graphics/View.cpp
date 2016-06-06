@@ -2066,11 +2066,11 @@ void View::AllocateScreenBuffers()
     // Follow the sRGB mode of the destination render target
     bool sRGB = renderTarget_ ? renderTarget_->GetParentTexture()->GetSRGB() : graphics_->GetSRGB();
     substituteRenderTarget_ = needSubstitute ? GetRenderSurfaceFromTexture(renderer_->GetScreenBuffer(viewSize_.x_, viewSize_.y_,
-        format, false, true, sRGB)) : (RenderSurface*)0;
+        1, format, false, true, sRGB)) : (RenderSurface*)0;
     for (unsigned i = 0; i < MAX_VIEWPORT_TEXTURES; ++i)
     {
         viewportTextures_[i] =
-            i < numViewportTextures ? renderer_->GetScreenBuffer(viewSize_.x_, viewSize_.y_, format, false, true, sRGB) :
+            i < numViewportTextures ? renderer_->GetScreenBuffer(viewSize_.x_, viewSize_.y_, 1, format, false, true, sRGB) :
                 (Texture*)0;
     }
     // If using a substitute render target and pingponging, the substitute can act as the second viewport texture
@@ -2102,9 +2102,11 @@ void View::AllocateScreenBuffers()
         int intHeight = (int)(height + 0.5f);
 
         // If the rendertarget is persistent, key it with a hash derived from the RT name and the view's pointer
-        renderTargets_[rtInfo.name_] =
-            renderer_->GetScreenBuffer(intWidth, intHeight, rtInfo.format_, rtInfo.cubemap_, rtInfo.filtered_, rtInfo.sRGB_,
-                rtInfo.persistent_ ? StringHash(rtInfo.name_).Value() + (unsigned)(size_t)this : 0);
+        StringHash nameHash(rtInfo.name_);
+        Texture* renderTarget = renderer_->GetScreenBuffer(intWidth, intHeight, rtInfo.layers_,
+            rtInfo.format_, rtInfo.cubemap_, rtInfo.filtered_, rtInfo.sRGB_,
+            rtInfo.persistent_ ? nameHash.Value() + (unsigned)(size_t)this : 0);
+        renderTargets_[nameHash] = renderTarget;
     }
 }
 
@@ -2847,6 +2849,13 @@ void View::CheckMaterialForAuxView(Material* material)
                 if (target && target->GetUpdateMode() == SURFACE_UPDATEVISIBLE)
                     target->QueueUpdate();
             }
+            else if (texture->GetType() == Texture2DArray::GetTypeStatic())
+            {
+                Texture2DArray* tex2Darray = static_cast<Texture2DArray*>(texture);
+                RenderSurface* target = tex2Darray->GetRenderSurface();
+                if (target && target->GetUpdateMode() == SURFACE_UPDATEVISIBLE)
+                    target->QueueUpdate();
+            }
             else if (texture->GetType() == TextureCube::GetTypeStatic())
             {
                 TextureCube* texCube = static_cast<TextureCube*>(texture);
@@ -3117,6 +3126,8 @@ RenderSurface* View::GetRenderSurfaceFromTexture(Texture* texture, CubeMapFace f
 
     if (texture->GetType() == Texture2D::GetTypeStatic())
         return static_cast<Texture2D*>(texture)->GetRenderSurface();
+    else if (texture->GetType() == Texture2DArray::GetTypeStatic())
+        return static_cast<Texture2DArray*>(texture)->GetRenderSurface();
     else if (texture->GetType() == TextureCube::GetTypeStatic())
         return static_cast<TextureCube*>(texture)->GetRenderSurface(face);
     else

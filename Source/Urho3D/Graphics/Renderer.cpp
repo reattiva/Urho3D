@@ -39,6 +39,7 @@
 #include "../Graphics/ShaderVariation.h"
 #include "../Graphics/Technique.h"
 #include "../Graphics/Texture2D.h"
+#include "../Graphics/Texture2DArray.h"
 #include "../Graphics/TextureCube.h"
 #include "../Graphics/VertexBuffer.h"
 #include "../Graphics/View.h"
@@ -960,7 +961,7 @@ Texture2D* Renderer::GetShadowMap(Light* light, Camera* camera, unsigned viewWid
     return newShadowMap;
 }
 
-Texture* Renderer::GetScreenBuffer(int width, int height, unsigned format, bool cubemap, bool filtered, bool srgb,
+Texture* Renderer::GetScreenBuffer(int width, int height, unsigned layers, unsigned format, bool cubemap, bool filtered, bool srgb,
     unsigned persistentKey)
 {
     bool depthStencil = (format == Graphics::GetDepthStencilFormat()) || (format == Graphics::GetReadableDepthFormat());
@@ -970,16 +971,20 @@ Texture* Renderer::GetScreenBuffer(int width, int height, unsigned format, bool 
         srgb = false;
     }
 
+    bool texturearray = !cubemap && layers > 1;
+
     if (cubemap)
         height = width;
 
-    long long searchKey = ((long long)format << 32) | (width << 16) | height;
+    long long searchKey = ((long long)layers << 48) | ((long long)format << 32) | (width << 16) | height;
     if (filtered)
-        searchKey |= 0x8000000000000000LL;
+        searchKey |= (long long)0x8 << 60;
     if (srgb)
-        searchKey |= 0x4000000000000000LL;
+        searchKey |= (long long)0x4 << 60;
     if (cubemap)
-        searchKey |= 0x2000000000000000LL;
+        searchKey |= (long long)0x3 << 60;
+    else if (texturearray)
+        searchKey |= (long long)0x2 << 60;
 
     // Add persistent key if defined
     if (persistentKey)
@@ -998,7 +1003,21 @@ Texture* Renderer::GetScreenBuffer(int width, int height, unsigned format, bool 
     {
         SharedPtr<Texture> newBuffer;
 
-        if (!cubemap)
+        if (cubemap)
+        {
+            SharedPtr<TextureCube> newTexCube(new TextureCube(context_));
+            newTexCube->SetSize(width, format, TEXTURE_RENDERTARGET);
+
+            newBuffer = newTexCube;
+        }
+        else if (texturearray)
+        {
+            SharedPtr<Texture2DArray> newTexArray(new Texture2DArray(context_));
+            newTexArray->SetSize(layers, width, height, format, TEXTURE_RENDERTARGET);
+
+            newBuffer = newTexArray;
+        }
+        else
         {
             SharedPtr<Texture2D> newTex2D(new Texture2D(context_));
             newTex2D->SetSize(width, height, format, depthStencil ? TEXTURE_DEPTHSTENCIL : TEXTURE_RENDERTARGET);
@@ -1019,20 +1038,21 @@ Texture* Renderer::GetScreenBuffer(int width, int height, unsigned format, bool 
 
             newBuffer = newTex2D;
         }
-        else
-        {
-            SharedPtr<TextureCube> newTexCube(new TextureCube(context_));
-            newTexCube->SetSize(width, format, TEXTURE_RENDERTARGET);
-
-            newBuffer = newTexCube;
-        }
 
         newBuffer->SetSRGB(srgb);
         newBuffer->SetFilterMode(filtered ? FILTER_BILINEAR : FILTER_NEAREST);
         newBuffer->ResetUseTimer();
         screenBuffers_[searchKey].Push(newBuffer);
 
-        URHO3D_LOGDEBUG("Allocated new screen buffer size " + String(width) + "x" + String(height) + " format " + String(format));
+        if (cubemap)
+            URHO3D_LOGDEBUG("Allocated new cube screen buffer size " + String(width) + "x" + String(height) +
+                            " format " + String(format));
+        else if (texturearray)
+            URHO3D_LOGDEBUG("Allocated new screen buffer array size " + String(width) + "x" + String(height) +
+                            " format " + String(format) + " layers " + String(layers));
+        else
+            URHO3D_LOGDEBUG("Allocated new screen buffer size " + String(width) + "x" + String(height) +
+                            " format " + String(format));
         return newBuffer;
     }
     else
@@ -1051,7 +1071,7 @@ RenderSurface* Renderer::GetDepthStencil(int width, int height)
         return 0;
     else
     {
-        return static_cast<Texture2D*>(GetScreenBuffer(width, height, Graphics::GetDepthStencilFormat(), false, false,
+        return static_cast<Texture2D*>(GetScreenBuffer(width, height, 1, Graphics::GetDepthStencilFormat(), false, false,
             false))->GetRenderSurface();
     }
 }
@@ -1923,7 +1943,7 @@ void Renderer::BlurShadowMap(View* view, Texture2D* shadowMap)
     graphics_->SetScissorTest(false);
 
     // Get a temporary render buffer
-    Texture2D* tmpBuffer = static_cast<Texture2D*>(GetScreenBuffer(shadowMap->GetWidth(), shadowMap->GetHeight(), shadowMap->GetFormat(), false, false, false));
+    Texture2D* tmpBuffer = static_cast<Texture2D*>(GetScreenBuffer(shadowMap->GetWidth(), shadowMap->GetHeight(), 1, shadowMap->GetFormat(), false, false, false));
     graphics_->SetRenderTarget(0, tmpBuffer->GetRenderSurface());
     graphics_->SetDepthStencil(GetDepthStencil(shadowMap->GetWidth(), shadowMap->GetHeight()));
     graphics_->SetViewport(IntRect(0, 0, shadowMap->GetWidth(), shadowMap->GetHeight()));

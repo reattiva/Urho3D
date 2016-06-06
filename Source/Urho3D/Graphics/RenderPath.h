@@ -70,6 +70,7 @@ struct URHO3D_API RenderTargetInfo
     RenderTargetInfo() :
         size_(Vector2::ZERO),
         sizeMode_(SIZE_ABSOLUTE),
+        layers_(1),
         enabled_(true),
         cubemap_(false),
         filtered_(false),
@@ -85,12 +86,16 @@ struct URHO3D_API RenderTargetInfo
     String name_;
     /// Tag name.
     String tag_;
+    /// Texture type.
+    StringHash type_;
     /// Texture format.
     unsigned format_;
     /// Absolute size or multiplier.
     Vector2 size_;
     /// Size mode.
     RenderTargetSizeMode sizeMode_;
+    /// Number of layers.
+    unsigned layers_;
     /// Enabled flag.
     bool enabled_;
     /// Cube map flag.

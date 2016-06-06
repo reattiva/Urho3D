@@ -61,6 +61,7 @@ static const char* sortModeNames[] =
 extern const char* blendModeNames[];
 
 TextureUnit ParseTextureUnitName(String name);
+StringHash ParseTextureTypeName(String name);
 
 void RenderTargetInfo::Load(const XMLElement& element)
 {
@@ -68,8 +69,18 @@ void RenderTargetInfo::Load(const XMLElement& element)
     tag_ = element.GetAttribute("tag");
     if (element.HasAttribute("enabled"))
         enabled_ = element.GetBool("enabled");
-    if (element.HasAttribute("cubemap"))
+
+    if (element.HasAttribute("layers"))
+        layers_ = element.GetUInt("layers");
+
+    if (element.HasAttribute("type"))
+        type_ = ParseTextureTypeName(element.GetAttribute("type"));
+    else if (element.HasAttribute("cubemap"))
+    {
         cubemap_ = element.GetBool("cubemap");
+        type_ = ParseTextureTypeName("cubemap");
+        layers_ = 6;
+    }
 
     String formatName = element.GetAttribute("format");
     format_ = Graphics::GetFormat(formatName);
