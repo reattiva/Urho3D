@@ -191,14 +191,6 @@ void RenderPathCommand::Load(const XMLElement& element)
 
         if (element.HasAttribute("groups"))
             element.GetUIntArray("groups", computeGroups_, 3);
-
-        /*if (element.HasAttribute("flags"))
-        {
-            flags_ = 0;
-            Vector<String> flags = element.GetAttribute("flags").ToLower().Split(' ');
-            if (flags.Contains("commandevent"))
-                flags_ |= FLAG_SEND_COMMANDEVENT;
-        }*/
         break;
 
     default:

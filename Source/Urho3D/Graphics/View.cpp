@@ -1671,16 +1671,6 @@ void View::ExecuteRenderPathCommands()
 
                     SetShaders(command);
                     Compute(command);
-
-                    // Command custom event
-                    /*if (command.flags_ & FLAG_SEND_COMMANDEVENT)
-                    {
-                        using namespace CommandEvent;
-
-                        VariantMap& eventData = GetEventDataMap();
-                        eventData[P_COMMANDINDEX] = i;
-                        SendEvent(E_COMMANDEVENT, eventData);
-                    }*/
                 }
                 break;
 

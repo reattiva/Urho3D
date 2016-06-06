@@ -63,12 +63,6 @@ enum RenderTargetSizeMode
     SIZE_VIEWPORTMULTIPLIER
 };
 
-/// Command flags
-enum CommandFlags
-{
-    FLAG_SEND_COMMANDEVENT = 0x0001
-};
-
 /// Rendertarget definition.
 struct URHO3D_API RenderTargetInfo
 {
@@ -120,8 +114,7 @@ struct URHO3D_API RenderPathCommand
         useFogColor_(false),
         markToStencil_(false),
         useLitBase_(true),
-        vertexLights_(false),
-        flags_(0)
+        vertexLights_(false)
     {
         computeGroups_[0] = computeGroups_[1] = computeGroups_[2] = 1;
     }
@@ -217,8 +210,6 @@ struct URHO3D_API RenderPathCommand
     bool useLitBase_;
     /// Vertex lights flag.
     bool vertexLights_;
-    /// Command flags
-    unsigned flags_;
     /// Compute groups to dispatch.
     unsigned computeGroups_[3];
 };
