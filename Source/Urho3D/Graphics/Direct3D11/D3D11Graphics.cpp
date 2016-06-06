@@ -2389,7 +2389,7 @@ bool Graphics::CreateDevice(int width, int height, int multiSample)
     {
         unsigned flags = 0;
 #if defined(URHO3D_D3D11_DEBUG)
-        //flags |= D3D11_CREATE_DEVICE_DEBUG;
+        flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
         HRESULT hr = D3D11CreateDevice(
             0,
