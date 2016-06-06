@@ -1,0 +1,4 @@
+<material>
+    <technique name="Techniques/DiffTA.xml" />
+    <texture unit="diffuse" name="Textures/CrateTA.xml" />
+</material>

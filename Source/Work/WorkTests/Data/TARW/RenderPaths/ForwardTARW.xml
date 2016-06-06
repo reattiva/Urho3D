@@ -1,0 +1,18 @@
+<renderpath>
+    <!-- Define a render target array: 4 texture of size 128x32 (to test a not square array) -->
+    <rendertarget name="Array" height="32" width="128" format="rgba" layers="4" />
+    <command type="clear" color="fog" depth="1.0" stencil="0" />
+    <command type="scenepass" pass="base" vertexlights="true" metadata="base" />
+    <command type="forwardlights" pass="light" />
+    <!-- Draw 3 not defined vertices instanced 4 times. These vertices will be defined in the VS, then in the GS we define
+         which texture in the array render to. Finally in the PS we write on the texture array, adding a bit of color -->
+    <command type="nulltriangle" enabled="true" tag="RenderTA" depthstencil="none" vs="RenderTA" gs="RenderTA" ps="RenderTA"
+             instances="4" >
+        <texture unit="diffuse" name="viewport" />
+        <output index="0" name="Array" unbind="" />
+    </command>
+    <!-- Show the texture array, a quarter of screen for each slice -->
+    <command type="quad" enabled="true" tag="ShowBuffersTA" vs="ShowBuffersTA" ps="ShowBuffersTA" output="viewport">
+        <texture unit="diffuse" name="Array" unbind="" />
+    </command>
+</renderpath>

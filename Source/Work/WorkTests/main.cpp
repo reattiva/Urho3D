@@ -7,10 +7,12 @@
 #include "SampleCS.h"
 #include "SampleCS2.h"
 #include "SampleRWBUF.h"
+#include "SampleTA.h"
+#include "SampleTARW.h"
 
 int getNumber()
 {
-    return 4;
+    return 6;
 }
 
 int RunApplication()
@@ -31,6 +33,12 @@ int RunApplication()
         break;
     case 4:
         application = new SampleRWBUF(context);
+        break;
+    case 5:
+        application = new SampleTA(context);
+        break;
+    case 6:
+        application = new SampleTARW(context);
         break;
     }
 
