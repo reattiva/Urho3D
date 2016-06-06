@@ -6,23 +6,34 @@
 #include "SampleGS.h"
 #include "SampleCS.h"
 #include "SampleCS2.h"
+#include "SampleRWBUF.h"
 
 int getNumber()
 {
-    return 1;
+    return 4;
 }
 
 int RunApplication()
 {
     Urho3D::SharedPtr<Urho3D::Context> context(new Urho3D::Context());
     Urho3D::SharedPtr<Sample> application;
-    int number = getNumber();
-    if (number == 1)
+
+    switch (getNumber())
+    {
+    case 1:
         application = new SampleGS(context);
-    else if (number == 2)
+        break;
+    case 2:
         application = new SampleCS(context);
-    else if (number == 3)
+        break;
+    case 3:
         application = new SampleCS2(context);
+        break;
+    case 4:
+        application = new SampleRWBUF(context);
+        break;
+    }
+
     if (application)
         return application->Run();
     return 0;

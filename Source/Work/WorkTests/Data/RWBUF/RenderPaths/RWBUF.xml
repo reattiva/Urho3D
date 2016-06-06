@@ -1,0 +1,22 @@
+<renderpath>
+    <command type="clear" color="0.0 0.0 1.0 1.0" />
+    <!-- this command is only used to interfere with the write/read commands; for a test the texture is unbinded
+         after the command --> 
+    <command type="quad" enabled="1" tag="bother1" vs="CopyFramebuffer" ps="CopyFramebuffer" output="viewport">
+        <texture unit="diffuse" unbind="" name="Textures/StoneDiffuse.dds" />
+    </command>
+    <!-- this command subdivides the image, gets the max color intensity for each cell and saves it in a buffer;
+         after the command, the write buffer (UAV slot 1) is unbinded to let the buffer be binded as SRV --> 
+    <command type="quad" enabled="1" tag="WriteBuffer" vs="WriteBuffer" ps="WriteBuffer" unbind=";;" output="viewport">
+        <texture unit="diffuse" name="Textures/HeightMap.png" />
+    </command>
+    <!-- this command is only used to interfere with the write/read commands --> 
+    <command type="quad" enabled="1" tag="bother2" vs="CopyFramebuffer" ps="CopyFramebuffer" output="viewport">
+        <texture unit="diffuse" name="Textures/StoneNormal.dds" />
+    </command>
+    <!-- this command reads from the buffer and shows the max color intensity for each cell; after
+         the command, the read buffer (SRV slot 6) is unbinded to let the buffer be binded as UAV --> 
+    <command type="quad" enabled="1" tag="ReadBuffer" vs="ReadBuffer" ps="ReadBuffer" unbind=";6;" output="viewport">
+        <texture unit="diffuse" name="viewport" />
+    </command>
+</renderpath>
