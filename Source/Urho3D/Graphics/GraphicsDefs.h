@@ -310,6 +310,18 @@ enum ShaderResourceType
     MAX_SHADER_RESOURCE_TYPE
 };
 
+/// Unbind ends
+enum UnbindEnd
+{
+    UNBIND_FIRST_RT = 0,
+    UNBIND_LAST_RT,
+    UNBIND_FIRST_SRV,
+    UNBIND_LAST_SRV,
+    UNBIND_FIRST_UAV,
+    UNBIND_LAST_UAV,
+    MAX_UNBIND_END
+};
+
 /// Shader parameter groups for determining need to update. On APIs that support constant buffers, these correspond to different constant buffers.
 enum ShaderParameterGroup
 {

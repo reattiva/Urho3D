@@ -512,6 +512,8 @@ public:
     void CleanupScratchBuffers();
     /// Clean up shader parameters when a shader variation is released or destroyed.
     void CleanUpShaderPrograms(ShaderVariation* variation);
+    /// Unbind render targets and shader views.
+    void Unbind(unsigned* unbindEnds);
     /// Get or create a constant buffer. Will be shared between shaders if possible.
     ConstantBuffer* GetOrCreateConstantBuffer(ShaderType type, StringHash name, const ShaderResource* resource);
     /// Add a ShaderBuffer to be accessible by shaders.

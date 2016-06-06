@@ -217,6 +217,8 @@ void RenderPathCommand::Load(const XMLElement& element)
                 outputs_.Resize(index + 1);
             outputs_[index].first_ = outputElem.GetAttribute("name");
             outputs_[index].second_ = outputElem.HasAttribute("face") ? (CubeMapFace)outputElem.GetInt("face") : FACE_POSITIVE_X;
+            if (outputElem.HasAttribute("unbind"))
+                UpdateEnds(index, unbindEnds_[UNBIND_FIRST_RT], unbindEnds_[UNBIND_LAST_RT]);
         }
         outputElem = outputElem.GetNext("output");
     }
@@ -231,9 +233,26 @@ void RenderPathCommand::Load(const XMLElement& element)
         {
             String name = textureElem.GetAttribute("name");
             textureNames_[unit] = name;
+            if (textureElem.HasAttribute("unbind"))
+                UpdateEnds((unsigned)unit, unbindEnds_[UNBIND_FIRST_SRV], unbindEnds_[UNBIND_LAST_SRV]);
         }
 
         textureElem = textureElem.GetNext("texture");
+    }
+
+    if (element.HasAttribute("unbind"))
+    {
+        Vector<String> groups = element.GetAttribute("unbind").Split(';', true);
+        if (groups.Size() == MAX_UNBIND_END/2)
+        {
+            for (unsigned i = 0; i < groups.Size(); ++i)
+            {
+                unsigned values[8];
+                unsigned count = ToUIntArray(groups[i], values, 8);
+                for (unsigned j = 0; j < count; ++j)
+                    UpdateEnds(values[j], unbindEnds_[i*2+0], unbindEnds_[i*2+1]);
+            }
+        }
     }
 }
 

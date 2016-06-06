@@ -2136,6 +2136,78 @@ void Graphics::CleanUpShaderPrograms(ShaderVariation* variation)
         shaderProgram_ = 0;
 }
 
+void Graphics::Unbind(unsigned* unbindEnds)
+{
+    unsigned firstUnbindRT = unbindEnds[UNBIND_FIRST_RT];
+    unsigned lastUnbindRT = unbindEnds[UNBIND_LAST_RT];
+    unsigned firstUnbindTexture = unbindEnds[UNBIND_FIRST_SRV];
+    unsigned lastUnbindTexture = unbindEnds[UNBIND_LAST_SRV];
+    unsigned firstUnbindUav = unbindEnds[UNBIND_FIRST_UAV];
+    unsigned lastUnbindUav = unbindEnds[UNBIND_LAST_UAV];
+
+    if (firstUnbindTexture < M_MAX_UNSIGNED)
+    {
+        for (unsigned i = firstUnbindTexture; i <= lastUnbindTexture; ++i)
+            impl_->shaderResourceViews_[i] = 0;
+
+        unsigned numSRVs = lastUnbindTexture - firstUnbindTexture + 1;
+        if (vertexShader_)
+            impl_->deviceContext_->VSSetShaderResources(firstUnbindTexture, numSRVs,
+                &impl_->shaderResourceViews_[firstUnbindTexture]);
+        if (pixelShader_)
+            impl_->deviceContext_->PSSetShaderResources(firstUnbindTexture, numSRVs,
+                &impl_->shaderResourceViews_[firstUnbindTexture]);
+        if (geometryShader_)
+            impl_->deviceContext_->GSSetShaderResources(firstUnbindTexture, numSRVs,
+                &impl_->shaderResourceViews_[firstUnbindTexture]);
+        if (computeShader_)
+            impl_->deviceContext_->CSSetShaderResources(firstUnbindTexture, numSRVs,
+                &impl_->shaderResourceViews_[firstUnbindTexture]);
+    }
+
+    if (firstUnbindUav < M_MAX_UNSIGNED && firstUnbindRT == M_MAX_UNSIGNED)
+    {
+        for (unsigned i = firstUnbindUav; i <= lastUnbindUav; ++i)
+            impl_->unorderedAccessViews_[i] = 0;
+
+        unsigned numUAVs = lastUnbindUav - firstUnbindUav + 1;
+        if (computeShader_)
+        {
+            impl_->deviceContext_->CSSetUnorderedAccessViews(firstUnbindUav, numUAVs,
+                &impl_->unorderedAccessViews_[firstUnbindUav], 0);
+        }
+        else
+        {
+            impl_->deviceContext_->OMSetRenderTargetsAndUnorderedAccessViews(
+                        D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL, 0, 0,
+                        firstUnbindUav, numUAVs, &impl_->unorderedAccessViews_[firstUnbindUav], 0);
+        }
+    }
+    else if (firstUnbindRT < M_MAX_UNSIGNED && firstUnbindUav == M_MAX_UNSIGNED)
+    {
+        for (unsigned i = firstUnbindRT; i <= lastUnbindRT; ++i)
+            impl_->renderTargetViews_[i] = 0;
+
+        unsigned numRTVs = lastUnbindRT - firstUnbindRT + 1;
+        impl_->deviceContext_->OMSetRenderTargetsAndUnorderedAccessViews(
+                numRTVs, &impl_->renderTargetViews_[0], impl_->depthStencilView_,
+                0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, 0, 0);
+    }
+    else if (firstUnbindUav < M_MAX_UNSIGNED && firstUnbindRT < M_MAX_UNSIGNED)
+    {
+        for (unsigned i = firstUnbindRT; i <= lastUnbindRT; ++i)
+            impl_->renderTargetViews_[i] = 0;
+        for (unsigned i = firstUnbindUav; i <= lastUnbindUav; ++i)
+            impl_->unorderedAccessViews_[i] = 0;
+
+        unsigned numRTVs = lastUnbindRT - firstUnbindRT + 1;
+        unsigned numUAVs = lastUnbindUav - firstUnbindUav + 1;
+        impl_->deviceContext_->OMSetRenderTargetsAndUnorderedAccessViews(
+                numRTVs, &impl_->renderTargetViews_[firstUnbindRT], impl_->depthStencilView_,
+                firstUnbindUav, numUAVs, &impl_->unorderedAccessViews_[firstUnbindUav], 0);
+    }
+}
+
 ConstantBuffer* Graphics::GetOrCreateConstantBuffer(ShaderType type, StringHash name, const ShaderResource* resource)
 {
     if (!resource)

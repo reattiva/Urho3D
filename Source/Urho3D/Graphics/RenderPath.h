@@ -117,6 +117,8 @@ struct URHO3D_API RenderPathCommand
         vertexLights_(false)
     {
         computeGroups_[0] = computeGroups_[1] = computeGroups_[2] = 1;
+        for (unsigned i = 0; i < MAX_UNBIND_END; ++i)
+            unbindEnds_[i] = M_MAX_UNSIGNED;
     }
 
     /// Read from an XML element.
@@ -212,6 +214,8 @@ struct URHO3D_API RenderPathCommand
     bool vertexLights_;
     /// Compute groups to dispatch.
     unsigned computeGroups_[3];
+    /// Rendertargets, SRVs, UAVs ranges to unbind at the end of the command.
+    unsigned unbindEnds_[MAX_UNBIND_END];
 };
 
 /// Rendering path definition.

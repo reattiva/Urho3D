@@ -1689,6 +1689,8 @@ void View::ExecuteRenderPathCommands()
                 break;
             }
 
+            graphics_->Unbind(command.unbindEnds_);
+
             // If current command output to the viewport, mark it modified
             if (viewportWrite)
                 viewportModified = true;
