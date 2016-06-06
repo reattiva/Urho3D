@@ -45,7 +45,8 @@ enum RenderCommandType
     CMD_LIGHTVOLUMES,
     CMD_RENDERUI,
     CMD_COMPUTE,
-    CMD_EVENT
+    CMD_EVENT,
+    CMD_NULLTRIANGLE
 };
 
 /// Rendering path sorting modes.
@@ -119,7 +120,8 @@ struct URHO3D_API RenderPathCommand
         useFogColor_(false),
         markToStencil_(false),
         useLitBase_(true),
-        vertexLights_(false)
+        vertexLights_(false),
+        instances_(0)
     {
         computeGroups_[0] = computeGroups_[1] = computeGroups_[2] = 1;
         for (unsigned i = 0; i < MAX_UNBIND_END; ++i)
@@ -221,6 +223,8 @@ struct URHO3D_API RenderPathCommand
     unsigned computeGroups_[3];
     /// Rendertargets, SRVs, UAVs ranges to unbind at the end of the command.
     unsigned unbindEnds_[MAX_UNBIND_END];
+    /// Number of instances to draw, nulltriangle command only.
+    unsigned instances_;
 };
 
 /// Rendering path definition.

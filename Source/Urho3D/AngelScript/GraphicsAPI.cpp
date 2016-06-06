@@ -317,6 +317,7 @@ static void RegisterRenderPath(asIScriptEngine* engine)
     engine->RegisterEnumValue("RenderCommandType", "CMD_RENDERUI", CMD_RENDERUI);
     engine->RegisterEnumValue("RenderCommandType", "CMD_COMPUTE", CMD_COMPUTE);
     engine->RegisterEnumValue("RenderCommandType", "CMD_EVENT", CMD_EVENT);
+    engine->RegisterEnumValue("RenderCommandType", "CMD_NULLTRIANGLE", CMD_NULLTRIANGLE);
 
     engine->RegisterEnum("RenderCommandSortMode");
     engine->RegisterEnumValue("RenderCommandSortMode", "SORT_FRONTTOBACK", SORT_FRONTTOBACK);

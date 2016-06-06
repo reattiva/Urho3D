@@ -48,6 +48,7 @@ static const char* commandTypeNames[] =
     "renderui",
     "compute",
     "event",
+    "nulltriangle",
     0
 };
 
@@ -170,6 +171,7 @@ void RenderPathCommand::Load(const XMLElement& element)
 
     case CMD_LIGHTVOLUMES:
     case CMD_QUAD:
+    case CMD_NULLTRIANGLE:
         vertexShaderName_ = element.GetAttribute("vs");
         pixelShaderName_ = element.GetAttribute("ps");
         geometryShaderName_ = element.GetAttribute("gs");
@@ -177,12 +179,16 @@ void RenderPathCommand::Load(const XMLElement& element)
         pixelShaderDefines_ = element.GetAttribute("psdefines");
         geometryShaderDefines_ = element.GetAttribute("gsdefines");
 
-        if (type_ == CMD_QUAD)
+        if (type_ == CMD_QUAD || type_ == CMD_NULLTRIANGLE)
         {
             if (element.HasAttribute("blend"))
             {
                 String blend = element.GetAttributeLower("blend");
                 blendMode_ = ((BlendMode)GetStringListIndex(blend.CString(), blendModeNames, BLEND_REPLACE));
+            }
+            if (element.HasAttribute("instances") && type_ == CMD_NULLTRIANGLE)
+            {
+                instances_ = element.GetUInt("instances");
             }
 
             XMLElement parameterElem = element.GetChild("parameter");

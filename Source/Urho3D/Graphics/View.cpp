@@ -1589,6 +1589,17 @@ void View::ExecuteRenderPathCommands()
                 }
                 break;
 
+            case CMD_NULLTRIANGLE:
+                {
+                    URHO3D_PROFILE(RenderQuad);
+
+                    SetRenderTargets(command);
+                    SetTextures(command);
+                    SetShaders(command);
+                    RenderNullTriangle(command);
+                }
+                break;
+
             case CMD_FORWARDLIGHTS:
                 // Render shadow maps + opaque objects' additive lighting
                 if (!actualView->lightQueues_.Empty())
@@ -1906,6 +1917,33 @@ void View::RenderQuad(RenderPathCommand& command)
     graphics_->SetStencilTest(false);
 
     DrawFullscreenQuad(false);
+}
+
+void View::RenderNullTriangle(RenderPathCommand& command)
+{
+    if (!graphics_->GetVertexShader() || !graphics_->GetPixelShader())
+        return;
+
+    SetGlobalShaderParameters();
+    SetCameraShaderParameters(camera_, false);
+
+    graphics_->SetBlendMode(command.blendMode_);
+    graphics_->SetDepthTest(CMP_ALWAYS);
+    graphics_->SetDepthWrite(false);
+    graphics_->SetFillMode(FILL_SOLID);
+    graphics_->SetClipPlane(false);
+    graphics_->SetScissorTest(false);
+    graphics_->SetStencilTest(false);
+    graphics_->SetCullMode(CULL_NONE);
+
+    graphics_->SetIndexBuffer(0);
+    graphics_->SetVertexBuffer(0);
+
+    unsigned instances = command.instances_;
+    if (instances > 1)
+        graphics_->DrawInstanced(TRIANGLE_LIST, 0, 3, 0, 3, instances);
+    else
+        graphics_->Draw(TRIANGLE_LIST, 0, 3);
 }
 
 bool View::IsNecessary(const RenderPathCommand& command)

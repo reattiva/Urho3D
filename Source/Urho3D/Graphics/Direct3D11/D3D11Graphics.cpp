@@ -875,7 +875,11 @@ void Graphics::DrawInstanced(PrimitiveType type, unsigned indexStart, unsigned i
         impl_->deviceContext_->IASetPrimitiveTopology(d3dPrimitiveType);
         primitiveType_ = d3dPrimitiveType;
     }
-    impl_->deviceContext_->DrawIndexedInstanced(indexCount, instanceCount, indexStart, 0, 0);
+
+    if (indexBuffer_)
+        impl_->deviceContext_->DrawIndexedInstanced(indexCount, instanceCount, indexStart, 0, 0);
+    else
+        impl_->deviceContext_->DrawInstanced(vertexCount, instanceCount, minVertex, 0);
 
     numPrimitives_ += instanceCount * primitiveCount;
     ++numBatches_;
