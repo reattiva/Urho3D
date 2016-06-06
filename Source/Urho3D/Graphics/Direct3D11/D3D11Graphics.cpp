@@ -2764,8 +2764,29 @@ void Graphics::PrepareDraw()
             (!depthStencil_ || (depthStencil_ && depthStencil_->GetWidth() == width_ && depthStencil_->GetHeight() == height_)))
             impl_->renderTargetViews_[0] = impl_->defaultRenderTargetView_;
 
-        impl_->deviceContext_->OMSetRenderTargets(MAX_RENDERTARGETS, &impl_->renderTargetViews_[0], impl_->depthStencilView_);
+        if (firstDirtyUav_ < M_MAX_UNSIGNED)
+        {
+            unsigned numRTVs = firstDirtyUav_;
+            unsigned numUAVs = lastDirtyUav_ - firstDirtyUav_ + 1;
+            impl_->deviceContext_->OMSetRenderTargetsAndUnorderedAccessViews(
+                        numRTVs, &impl_->renderTargetViews_[0], impl_->depthStencilView_,
+                        firstDirtyUav_, numUAVs, &impl_->unorderedAccessViews_[firstDirtyUav_], 0);
+
+            firstDirtyUav_ = lastDirtyUav_ = M_MAX_UNSIGNED;
+        }
+        else
+            impl_->deviceContext_->OMSetRenderTargets(MAX_RENDERTARGETS, &impl_->renderTargetViews_[0], impl_->depthStencilView_);
+
         renderTargetsDirty_ = false;
+    }
+    else if (firstDirtyUav_ < M_MAX_UNSIGNED)
+    {
+        unsigned numUAVs = lastDirtyUav_ - firstDirtyUav_ + 1;
+        impl_->deviceContext_->OMSetRenderTargetsAndUnorderedAccessViews(
+                    D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL, 0, 0,
+                    firstDirtyUav_, numUAVs, &impl_->unorderedAccessViews_[firstDirtyUav_], 0);
+
+        firstDirtyUav_ = lastDirtyUav_ = M_MAX_UNSIGNED;
     }
 
     if (texturesDirty_ && firstDirtyTexture_ < M_MAX_UNSIGNED)
