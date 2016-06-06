@@ -113,6 +113,20 @@ inline T Clamp(T value, T min, T max)
         return value;
 }
 
+/// Update an unsigned range with a value.
+inline void UpdateEnds(unsigned value, unsigned& min, unsigned& max)
+{
+    if (min == M_MAX_UNSIGNED)
+        min = max = value;
+    else
+    {
+        if (value < min)
+            min = value;
+        if (value > max)
+            max = value;
+    }
+}
+
 /// Smoothly damp between values.
 template <class T>
 inline T SmoothStep(T lhs, T rhs, T t)

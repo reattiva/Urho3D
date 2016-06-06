@@ -212,19 +212,6 @@ static HWND GetWindowHandle(SDL_Window* window)
     return sysInfo.info.win.window;
 }
 
-static void SetDirtyEnds(unsigned slot, unsigned& first, unsigned& last)
-{
-    if (first == M_MAX_UNSIGNED)
-        first = last = slot;
-    else
-    {
-        if (slot < first)
-            first = slot;
-        if (slot > last)
-            last = slot;
-    }
-}
-
 const Vector2 Graphics::pixelUVOffset(0.0f, 0.0f);
 
 Graphics::Graphics(Context* context) :
@@ -970,7 +957,7 @@ bool Graphics::SetVertexBuffers(const PODVector<VertexBuffer*>& buffers, unsigne
         if (changed)
         {
             vertexDeclarationDirty_ = true;
-            SetDirtyEnds(i, firstDirtyVB_, lastDirtyVB_);
+            UpdateEnds(i, firstDirtyVB_, lastDirtyVB_);
         }
     }
 
@@ -1164,7 +1151,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariat
             if (srv != impl_->shaderResourceViews_[slot])
             {
                 impl_->shaderResourceViews_[slot] = srv;
-                SetDirtyEnds(slot, firstDirtyTexture_, lastDirtyTexture_);
+                UpdateEnds(slot, firstDirtyTexture_, lastDirtyTexture_);
                 texturesDirty_ = true;
             }
         }
@@ -1178,7 +1165,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariat
             if (uav != impl_->unorderedAccessViews_[slot])
             {
                 impl_->unorderedAccessViews_[slot] = uav;
-                SetDirtyEnds(slot, firstDirtyUav_, lastDirtyUav_);
+                UpdateEnds(slot, firstDirtyUav_, lastDirtyUav_);
             }
         }
     }
@@ -1441,7 +1428,7 @@ void Graphics::SetTexture(unsigned index, Texture* texture)
 
     if (texture != textures_[index])
     {
-        SetDirtyEnds(index, firstDirtyTexture_, lastDirtyTexture_);
+        UpdateEnds(index, firstDirtyTexture_, lastDirtyTexture_);
 
         textures_[index] = texture;
         impl_->shaderResourceViews_[index] = texture ? (ID3D11ShaderResourceView*)texture->GetShaderResourceView() : 0;
