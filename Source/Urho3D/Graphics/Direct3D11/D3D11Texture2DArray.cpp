@@ -134,7 +134,7 @@ bool Texture2DArray::EndLoad()
 
 void Texture2DArray::Release()
 {
-    if (graphics_)
+    if (graphics_ && object_)
     {
         for (unsigned i = 0; i < MAX_TEXTURE_UNITS; ++i)
         {
