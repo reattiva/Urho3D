@@ -79,6 +79,7 @@ Texture::Texture(Context* context) :
     Resource(context),
     GPUObject(GetSubsystem<Graphics>()),
     shaderResourceView_(0),
+    unorderedAccessView_(0),
     sampler_(0),
     format_(DXGI_FORMAT_UNKNOWN),
     usage_(TEXTURE_STATIC),

@@ -270,6 +270,7 @@ Graphics::~Graphics()
     vertexDeclarations_.Clear();
     constantBuffers_.Clear();
     shaderBuffers_.Clear();
+    computeTargets_.Clear();
 
     for (HashMap<unsigned, ID3D11BlendState*>::Iterator i = impl_->blendStates_.Begin(); i != impl_->blendStates_.End(); ++i)
     {
@@ -1146,6 +1147,7 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariat
         if (buffersChanged[CS])
             impl_->deviceContext_->CSSetConstantBuffers(0, MAX_SHADER_PARAMETER_GROUPS, &impl_->constantBuffers_[CS][0]);
 
+        // Inputs buffer
         for (unsigned i = 0; i < shaderProgram_->resourceViewBuffers_.Size(); ++i)
         {
             const SlotBufferPair& pair = shaderProgram_->resourceViewBuffers_.At(i);
@@ -1160,12 +1162,29 @@ void Graphics::SetShaders(ShaderVariation* vs, ShaderVariation* ps, ShaderVariat
             }
         }
 
+        // Output buffers
         for (unsigned i = 0; i < shaderProgram_->accessViewBuffers_.Size(); ++i)
         {
             const SlotBufferPair& pair = shaderProgram_->accessViewBuffers_.At(i);
             unsigned slot = pair.first_;
             ShaderBuffer* buffer = pair.second_;
             ID3D11UnorderedAccessView* uav = (ID3D11UnorderedAccessView*)buffer->GetUnorderedAccessView();
+            if (uav != impl_->unorderedAccessViews_[slot])
+            {
+                impl_->unorderedAccessViews_[slot] = uav;
+                UpdateEnds(slot, firstDirtyUav_, lastDirtyUav_);
+            }
+        }
+
+        // Compute output textures
+        for (unsigned i = 0; i < shaderProgram_->accessViewTextures_.Size(); ++i)
+        {
+            const SlotTexturePair& pair = shaderProgram_->accessViewTextures_.At(i);
+            unsigned slot = pair.first_;
+            Texture* texture = pair.second_.Get();
+            ID3D11UnorderedAccessView* uav = 0;
+            if (texture)
+                uav = (ID3D11UnorderedAccessView*)texture->GetUnorderedAccessView();
             if (uav != impl_->unorderedAccessViews_[slot])
             {
                 impl_->unorderedAccessViews_[slot] = uav;
@@ -2260,6 +2279,25 @@ ShaderBuffer* Graphics::GetShaderBuffer(StringHash bufferName)
 {
     HashMap<StringHash, SharedPtr<ShaderBuffer> >::Iterator i = shaderBuffers_.Find(bufferName);
     if (i != shaderBuffers_.End())
+        return i->second_.Get();
+    else
+        return 0;
+}
+
+void Graphics::ClearComputeTargets()
+{
+    computeTargets_.Clear();
+}
+
+void Graphics::AddComputeTarget(StringHash targetName, Texture *texture)
+{
+    computeTargets_[targetName] = texture;
+}
+
+Texture *Graphics::GetComputeTarget(StringHash targetName)
+{
+    HashMap<StringHash, WeakPtr<Texture> >::Iterator i = computeTargets_.Find(targetName);
+    if (i != computeTargets_.End())
         return i->second_.Get();
     else
         return 0;

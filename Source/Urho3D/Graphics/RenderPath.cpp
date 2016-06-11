@@ -95,6 +95,9 @@ void RenderTargetInfo::Load(const XMLElement& element)
     if (element.HasAttribute("persistent"))
         persistent_ = element.GetBool("persistent");
 
+    if (element.HasAttribute("compute"))
+        compute_ = element.GetBool("compute");
+
     if (element.HasAttribute("size"))
         size_ = element.GetVector2("size");
     if (element.HasAttribute("sizedivisor"))

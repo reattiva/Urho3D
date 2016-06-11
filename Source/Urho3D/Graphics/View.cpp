@@ -2118,6 +2118,8 @@ void View::AllocateScreenBuffers()
     if (numViewportTextures == 1 && substituteRenderTarget_)
         viewportTextures_[1] = substituteRenderTarget_->GetParentTexture();
 
+    graphics_->ClearComputeTargets();
+
     // Allocate extra render targets defined by the rendering path
     for (unsigned i = 0; i < renderPath_->renderTargets_.Size(); ++i)
     {
@@ -2145,9 +2147,12 @@ void View::AllocateScreenBuffers()
         // If the rendertarget is persistent, key it with a hash derived from the RT name and the view's pointer
         StringHash nameHash(rtInfo.name_);
         Texture* renderTarget = renderer_->GetScreenBuffer(intWidth, intHeight, rtInfo.layers_,
-            rtInfo.format_, rtInfo.cubemap_, rtInfo.filtered_, rtInfo.sRGB_,
+            rtInfo.format_, rtInfo.cubemap_, rtInfo.filtered_, rtInfo.sRGB_, rtInfo.compute_,
             rtInfo.persistent_ ? nameHash.Value() + (unsigned)(size_t)this : 0);
         renderTargets_[nameHash] = renderTarget;
+
+        if (rtInfo.compute_)
+            graphics_->AddComputeTarget(nameHash, renderTarget);
     }
 }
 
@@ -2880,7 +2885,7 @@ void View::CheckMaterialForAuxView(Material* material)
     for (HashMap<TextureUnit, SharedPtr<Texture> >::ConstIterator i = textures.Begin(); i != textures.End(); ++i)
     {
         Texture* texture = i->second_.Get();
-        if (texture && texture->GetUsage() == TEXTURE_RENDERTARGET)
+        if (texture && (texture->GetUsage() == TEXTURE_RENDERTARGET || texture->GetUsage() == TEXTURE_COMPUTETARGET))
         {
             // Have to check cube & 2D textures separately
             if (texture->GetType() == Texture2D::GetTypeStatic())

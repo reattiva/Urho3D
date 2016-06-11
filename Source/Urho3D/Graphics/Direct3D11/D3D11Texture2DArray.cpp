@@ -148,6 +148,7 @@ void Texture2DArray::Release()
 
     URHO3D_SAFE_RELEASE(object_);
     URHO3D_SAFE_RELEASE(shaderResourceView_);
+    URHO3D_SAFE_RELEASE(unorderedAccessView_);
     URHO3D_SAFE_RELEASE(sampler_);
 }
 
@@ -176,7 +177,7 @@ bool Texture2DArray::SetSize(unsigned layers, int width, int height, unsigned fo
 
     usage_ = usage;
 
-    if (usage_ == TEXTURE_RENDERTARGET)
+    if (usage_ == TEXTURE_RENDERTARGET || usage_ == TEXTURE_COMPUTETARGET)
     {
         renderSurface_ = new RenderSurface(this);
 
@@ -187,7 +188,7 @@ bool Texture2DArray::SetSize(unsigned layers, int width, int height, unsigned fo
     else if (usage_ == TEXTURE_DYNAMIC)
         requestedLevels_ = 1;
 
-    if (usage_ == TEXTURE_RENDERTARGET)
+    if (usage_ == TEXTURE_RENDERTARGET || usage_ == TEXTURE_COMPUTETARGET)
         SubscribeToEvent(E_RENDERSURFACEUPDATE, URHO3D_HANDLER(Texture2DArray, HandleRenderSurfaceUpdate));
     else
         UnsubscribeFromEvent(E_RENDERSURFACEUPDATE);
@@ -583,10 +584,12 @@ bool Texture2DArray::Create()
     textureDesc.SampleDesc.Quality = 0;
     textureDesc.Usage = usage_ == TEXTURE_DYNAMIC ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
     textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    if (usage_ == TEXTURE_RENDERTARGET)
+    if (usage_ == TEXTURE_RENDERTARGET  || usage_ == TEXTURE_COMPUTETARGET)
         textureDesc.BindFlags |= D3D11_BIND_RENDER_TARGET;
     else if (usage_ == TEXTURE_DEPTHSTENCIL)
         textureDesc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
+    if (usage_ == TEXTURE_COMPUTETARGET)
+        textureDesc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
     textureDesc.CPUAccessFlags = usage_ == TEXTURE_DYNAMIC ? D3D11_CPU_ACCESS_WRITE : 0;
 
     HRESULT hr = graphics_->GetImpl()->GetDevice()->CreateTexture2D(&textureDesc, 0, (ID3D11Texture2D**)&object_);
@@ -624,8 +627,38 @@ bool Texture2DArray::Create()
         return false;
     }
 
-    if (usage_ == TEXTURE_RENDERTARGET)
+    if (usage_ == TEXTURE_COMPUTETARGET)
     {
+        D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+        memset(&uavDesc, 0, sizeof uavDesc);
+        uavDesc.Format = (DXGI_FORMAT)GetSRVFormat(textureDesc.Format);
+        if (layers_ == 1)
+        {
+            uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+            uavDesc.Texture2D.MipSlice = 0;
+        }
+        else
+        {
+            uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+            uavDesc.Texture2DArray.MipSlice = 0;
+            uavDesc.Texture2DArray.ArraySize = layers_;
+            uavDesc.Texture2DArray.FirstArraySlice = 0;
+        }
+
+        hr = graphics_->GetImpl()->GetDevice()->CreateUnorderedAccessView((ID3D11Resource*)object_, 0,
+            (ID3D11UnorderedAccessView**)&unorderedAccessView_);
+        if (FAILED(hr))
+        {
+            URHO3D_SAFE_RELEASE(unorderedAccessView_);
+            URHO3D_LOGD3DERROR("Failed to create unordered access view for texture array", hr);
+            return false;
+        }
+    }
+
+    if (usage_ == TEXTURE_RENDERTARGET || usage_ == TEXTURE_COMPUTETARGET)
+    {
+        //renderSurface_ = new RenderSurface(this);
+
         D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
         memset(&renderTargetViewDesc, 0, sizeof renderTargetViewDesc);
         renderTargetViewDesc.Format = textureDesc.Format;

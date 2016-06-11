@@ -255,7 +255,8 @@ enum TextureUsage
 {
     TEXTURE_STATIC = 0,
     TEXTURE_DYNAMIC,
-    TEXTURE_RENDERTARGET,
+    TEXTURE_COMPUTETARGET,
+    TEXTURE_RENDERTARGET, // note: also used as separator
     TEXTURE_DEPTHSTENCIL
 };
 

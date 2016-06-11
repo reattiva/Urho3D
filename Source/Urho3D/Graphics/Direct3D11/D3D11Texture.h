@@ -133,6 +133,8 @@ public:
 
     /// Return shader resource view.
     void* GetShaderResourceView() const { return shaderResourceView_; }
+    /// Return unordered access view.
+    void* GetUnorderedAccessView() const { return unorderedAccessView_; }
 
     /// Return sampler state object.
     void* GetSampler() const { return sampler_; }
@@ -154,6 +156,8 @@ protected:
 
     /// Shader resource view.
     void* shaderResourceView_;
+    /// Unordered access view;
+    void* unorderedAccessView_;
     /// Sampler state object.
     void* sampler_;
     /// Texture format.

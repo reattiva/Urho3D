@@ -359,8 +359,8 @@ public:
     /// Allocate a shadow map. If shadow map reuse is disabled, a different map is returned each time.
     Texture2D* GetShadowMap(Light* light, Camera* camera, unsigned viewWidth, unsigned viewHeight);
     /// Allocate a rendertarget or depth-stencil texture for deferred rendering or postprocessing. Should only be called during actual rendering, not before.
-    Texture* GetScreenBuffer
-        (int width, int height, unsigned layers, unsigned format, bool cubemap, bool filtered, bool srgb, unsigned persistentKey = 0);
+    Texture* GetScreenBuffer(int width, int height, unsigned layers, unsigned format, bool cubemap,
+        bool filtered, bool srgb, bool compute = false, unsigned persistentKey = 0);
     /// Allocate a depth-stencil surface that does not need to be readable. Should only be called during actual rendering, not before.
     RenderSurface* GetDepthStencil(int width, int height);
     /// Allocate an occlusion buffer.

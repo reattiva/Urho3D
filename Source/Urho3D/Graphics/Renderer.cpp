@@ -961,8 +961,8 @@ Texture2D* Renderer::GetShadowMap(Light* light, Camera* camera, unsigned viewWid
     return newShadowMap;
 }
 
-Texture* Renderer::GetScreenBuffer(int width, int height, unsigned layers, unsigned format, bool cubemap, bool filtered, bool srgb,
-    unsigned persistentKey)
+Texture* Renderer::GetScreenBuffer(int width, int height, unsigned layers, unsigned format, bool cubemap,
+    bool filtered, bool srgb, bool compute, unsigned persistentKey)
 {
     bool depthStencil = (format == Graphics::GetDepthStencilFormat()) || (format == Graphics::GetReadableDepthFormat());
     if (depthStencil)
@@ -1013,7 +1013,7 @@ Texture* Renderer::GetScreenBuffer(int width, int height, unsigned layers, unsig
         else if (texturearray)
         {
             SharedPtr<Texture2DArray> newTexArray(new Texture2DArray(context_));
-            newTexArray->SetSize(layers, width, height, format, TEXTURE_RENDERTARGET);
+            newTexArray->SetSize(layers, width, height, format, compute ? TEXTURE_COMPUTETARGET : TEXTURE_RENDERTARGET);
 
             newBuffer = newTexArray;
         }

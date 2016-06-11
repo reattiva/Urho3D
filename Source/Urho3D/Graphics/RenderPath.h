@@ -76,7 +76,8 @@ struct URHO3D_API RenderTargetInfo
         cubemap_(false),
         filtered_(false),
         sRGB_(false),
-        persistent_(false)
+        persistent_(false),
+        compute_(false)
     {
     }
 
@@ -107,6 +108,8 @@ struct URHO3D_API RenderTargetInfo
     bool sRGB_;
     /// Should be persistent and not shared/reused between other buffers of same size.
     bool persistent_;
+    /// Compute target flag, when it is used as output in a compute shader.
+    bool compute_;
 };
 
 /// Rendering path command.

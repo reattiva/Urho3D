@@ -35,7 +35,7 @@ namespace Urho3D
 /// A pair of a buffer and the slot where it is bound.
 typedef Pair<unsigned, SharedPtr<ShaderBuffer> > SlotBufferPair;
 /// A pair of a texture and the slot where it is bound.
-typedef Pair<unsigned, SharedPtr<Texture> > SlotTexturePair;
+typedef Pair<unsigned, WeakPtr<Texture> > SlotTexturePair;
 
 /// Combined information for specific vertex and pixel shaders.
 class URHO3D_API ShaderProgram : public RefCounted
@@ -107,8 +107,16 @@ public:
                 }
                 else if (resource.type_ == SR_UAV_TYPED)
                 {
-                    URHO3D_LOGERROR("SR_UAV_TYPED not implemented in ShaderProgram");
+                    // Get the texture where compute shaders can write to
+                    Texture* texture = graphics->GetComputeTarget(resourceHash);
+                    if (!texture)
+                        URHO3D_LOGERROR("UAV texture " + resource.name_ + " not found");
+                    else if (texture->GetUsage() != TEXTURE_COMPUTETARGET)
+                        URHO3D_LOGERROR("UAV texture " + resource.name_ + " needs COMPUTETARGET usage");
+                    else
+                        accessViewTextures_.Push(MakePair(resource.bindSlot_, WeakPtr<Texture>(texture)));
                 }
+
             }
         }
 
@@ -130,6 +138,8 @@ public:
     Vector< SlotBufferPair > resourceViewBuffers_;
     /// Output buffers accessed by a unordered access views (UAV).
     Vector< SlotBufferPair > accessViewBuffers_;
+    /// Output textures accessed by a unordered access views (UAV).
+    Vector< SlotTexturePair > accessViewTextures_;
 };
 
 }

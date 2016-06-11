@@ -522,6 +522,12 @@ public:
     void AddShaderBuffer(StringHash bufferName, ShaderBuffer* buffer);
     /// Get a ShaderBuffer by name.
     ShaderBuffer* GetShaderBuffer(StringHash bufferName);
+    /// Clear compute targets.
+    void ClearComputeTargets();
+    /// Add a compute target.
+    void AddComputeTarget(StringHash targetName, Texture* texture);
+    /// Get a compute target by name.
+    Texture* GetComputeTarget(StringHash targetName);
 
     /// Return the API-specific alpha texture format.
     static unsigned GetAlphaFormat();
@@ -766,6 +772,8 @@ private:
     PODVector<ConstantBuffer*> dirtyConstantBuffers_;
     /// Shader buffers.
     HashMap<StringHash, SharedPtr<ShaderBuffer> > shaderBuffers_;
+    /// Compute targets.
+    HashMap<StringHash, WeakPtr<Texture> > computeTargets_;
     /// Shader programs.
     ShaderProgramMap shaderPrograms_;
     /// Shader program in use.
