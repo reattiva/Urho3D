@@ -2497,15 +2497,11 @@ bool Graphics::CreateDevice(int width, int height, int multiSample)
     // Device needs only to be created once
     if (!impl_->device_)
     {
-        unsigned flags = 0;
-#if defined(URHO3D_D3D11_DEBUG)
-        flags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
         HRESULT hr = D3D11CreateDevice(
             0,
             D3D_DRIVER_TYPE_HARDWARE,
             0,
-            flags,
+            0,
             0,
             0,
             D3D11_SDK_VERSION,
