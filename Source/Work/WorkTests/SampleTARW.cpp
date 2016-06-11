@@ -53,6 +53,9 @@
 // Path of the example data folder (relative to the bin folder)
 #define RESOURCE_PATH "../../Source/Work/WorkTests/Data/TARW"
 
+// Use a compute shader to write a texture array via UAV
+#define COMPUTE_WRITE
+
 SampleTARW::SampleTARW(Context* context) :
     Sample(context),
     drawDebug_(false)
@@ -125,7 +128,11 @@ void SampleTARW::SetupViewport()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
 
     RenderPath* renderPath = new RenderPath();
+#ifdef COMPUTE_WRITE
+    renderPath->Load(cache->GetResource<XMLFile>("RenderPaths/ForwardTACO.xml"));
+#else
     renderPath->Load(cache->GetResource<XMLFile>("RenderPaths/ForwardTARW.xml"));
+#endif
 
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>(), renderPath));

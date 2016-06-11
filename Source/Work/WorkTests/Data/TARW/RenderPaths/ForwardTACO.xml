@@ -1,0 +1,13 @@
+<renderpath>
+    <!-- Define a render target array: 4 texture of size 32x32 -->
+    <rendertarget name="Array" height="32" width="32" format="rgba" layers="4" compute="true" />
+    <command type="clear" color="fog" depth="1.0" stencil="0" />
+    <command type="scenepass" pass="base" vertexlights="true" metadata="base" />
+    <command type="forwardlights" pass="light" />
+    <!-- Write to the texture array, then unbind the writing UAV -->
+    <command type="compute" enabled="1" tag="ComputeTA" cs="ComputeTA" groups="32 32 4" unbind=";;0" />
+    <!-- Show the texture array, a quarter of screen for each slice, the unbind the reading SRV -->
+    <command type="quad" enabled="1" tag="ShowBuffersTA" vs="ShowBuffersTA" ps="ShowBuffersTA" output="viewport">
+        <texture unit="diffuse" name="Array" unbind="" />
+    </command>
+</renderpath>
