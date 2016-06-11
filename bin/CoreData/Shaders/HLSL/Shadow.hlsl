@@ -38,10 +38,11 @@ void VS(float4 iPos : POSITION,
 void PS(
     #ifdef VSM_SHADOW
         float3 iTexCoord : TEXCOORD0,
+        out float4 oColor : OUTCOLOR0
     #else
-        float2 iTexCoord : TEXCOORD0,
+        float2 iTexCoord : TEXCOORD0
     #endif
-    out float4 oColor : OUTCOLOR0)
+    )
 {
     #ifdef ALPHAMASK
         float alpha = Sample2D(DiffMap, iTexCoord.xy).a;
@@ -52,7 +53,5 @@ void PS(
     #ifdef VSM_SHADOW
         float depth = iTexCoord.z;
         oColor = float4(depth, depth * depth, 1.0, 1.0);
-    #else
-        oColor = 1.0;
     #endif
 }
