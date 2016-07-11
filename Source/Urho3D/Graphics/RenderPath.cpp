@@ -274,6 +274,11 @@ void RenderPathCommand::Load(const XMLElement& element)
             }
         }
     }
+
+    if (element.HasAttribute("jump"))
+        relativeJump_ = element.GetInt("jump");
+    if (element.HasAttribute("repeat"))
+        repeats_ = element.GetUInt("repeat");
 }
 
 void RenderPathCommand::SetTextureName(TextureUnit unit, const String& name)

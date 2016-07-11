@@ -125,7 +125,9 @@ struct URHO3D_API RenderPathCommand
         markToStencil_(false),
         useLitBase_(true),
         vertexLights_(false),
-        instances_(0)
+        instances_(0),
+        relativeJump_(0),
+        repeats_(0)
     {
         computeGroups_[0] = computeGroups_[1] = computeGroups_[2] = 1;
         for (unsigned i = 0; i < MAX_UNBIND_END; ++i)
@@ -231,6 +233,10 @@ struct URHO3D_API RenderPathCommand
     unsigned unbindEnds_[MAX_UNBIND_END];
     /// Number of instances to draw, nulltriangle command only.
     unsigned instances_;
+    /// Relative jump, done after the command.
+    int relativeJump_;
+    /// Number of repetitions, done after the command.
+    unsigned repeats_;
 };
 
 /// Rendering path definition.

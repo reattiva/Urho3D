@@ -1458,6 +1458,7 @@ void View::ExecuteRenderPathCommands()
         currentRenderTarget_ = substituteRenderTarget_ ? substituteRenderTarget_ : renderTarget_;
         currentViewportTexture_ = 0;
 
+        unsigned repeatCount = 0;
         bool viewportModified = false;
         bool isPingponging = false;
         usedResolve_ = false;
@@ -1706,6 +1707,23 @@ void View::ExecuteRenderPathCommands()
             // If current command output to the viewport, mark it modified
             if (viewportWrite)
                 viewportModified = true;
+
+            // Repeat and jump
+            if (command.repeats_)
+            {
+                if (repeatCount < command.repeats_)
+                {
+                    ++repeatCount;
+                    if (command.relativeJump_)
+                    {
+                        ic += command.relativeJump_;
+                        ic = Clamp((int)ic, 0, (int)renderPath_->commands_.Size()-1);
+                    }
+                    --ic;
+                }
+                else
+                    repeatCount = 0;
+            }
         }
     }
 }
