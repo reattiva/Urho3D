@@ -9,10 +9,11 @@
 #include "SampleRWBUF.h"
 #include "SampleTA.h"
 #include "SampleTARW.h"
+#include "SampleScene.h"
 
 int getNumber()
 {
-    return 6;
+    return 7;
 }
 
 int RunApplication()
@@ -39,6 +40,9 @@ int RunApplication()
         break;
     case 6:
         application = new SampleTARW(context);
+        break;
+    case 7:
+        application = new SampleScene(context);
         break;
     }
 
