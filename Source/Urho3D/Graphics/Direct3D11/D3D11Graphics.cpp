@@ -83,6 +83,7 @@ namespace Urho3D
 static const D3D11_COMPARISON_FUNC d3dCmpFunc[] =
 {
     D3D11_COMPARISON_ALWAYS,
+    D3D11_COMPARISON_ALWAYS,
     D3D11_COMPARISON_EQUAL,
     D3D11_COMPARISON_NOT_EQUAL,
     D3D11_COMPARISON_LESS,
@@ -2961,7 +2962,7 @@ void Graphics::PrepareDraw()
 
                 D3D11_DEPTH_STENCIL_DESC stateDesc;
                 memset(&stateDesc, 0, sizeof stateDesc);
-                stateDesc.DepthEnable = TRUE;
+                stateDesc.DepthEnable = depthTestMode_ == CMP_DISABLED ? FALSE : TRUE;
                 stateDesc.DepthWriteMask = depthWrite_ ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
                 stateDesc.DepthFunc = d3dCmpFunc[depthTestMode_];
                 stateDesc.StencilEnable = stencilTest_ ? TRUE : FALSE;
@@ -3020,7 +3021,7 @@ void Graphics::PrepareDraw()
                 stateDesc.DepthBias = scaledDepthBias;
                 stateDesc.DepthBiasClamp = M_INFINITY;
                 stateDesc.SlopeScaledDepthBias = slopeScaledDepthBias_;
-                stateDesc.DepthClipEnable = TRUE;
+                stateDesc.DepthClipEnable = depthTestMode_ == CMP_DISABLED ? FALSE : TRUE;
                 stateDesc.ScissorEnable = scissorTest_ ? TRUE : FALSE;
                 stateDesc.MultisampleEnable = TRUE;
                 stateDesc.AntialiasedLineEnable = FALSE;

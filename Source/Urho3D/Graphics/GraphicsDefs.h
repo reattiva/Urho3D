@@ -78,7 +78,8 @@ enum BlendMode
 /// Depth or stencil compare mode.
 enum CompareMode
 {
-    CMP_ALWAYS = 0,
+    CMP_DISABLED = 0,
+    CMP_ALWAYS,
     CMP_EQUAL,
     CMP_NOTEQUAL,
     CMP_LESS,
