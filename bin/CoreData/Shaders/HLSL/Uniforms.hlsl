@@ -176,6 +176,7 @@ cbuffer LightPS : register(b3)
     float4 cShadowSplits;
     float2 cVSMShadowParams;
     float4x4 cLightMatricesPS[4];
+    float4 cShadowProjs[4];
 }
 
 #ifndef CUSTOM_MATERIAL_CBUFFER

@@ -384,12 +384,20 @@ void Batch::Prepare(View* view, Camera* camera, bool setModelTransform, bool all
                 case LIGHT_DIRECTIONAL:
                     {
                         Matrix4 shadowMatrices[MAX_CASCADE_SPLITS];
+                        Vector4 shadowProjs[MAX_CASCADE_SPLITS];
                         unsigned numSplits = Min(MAX_CASCADE_SPLITS, lightQueue_->shadowSplits_.Size());
 
                         for (unsigned i = 0; i < numSplits; ++i)
+                        {
                             CalculateShadowMatrix(shadowMatrices[i], lightQueue_, i, renderer);
 
+                            Camera* shadowCamera = lightQueue_->shadowSplits_[i].shadowCamera_;
+                            Matrix4 proj(shadowCamera->GetProjection());
+                            shadowProjs[i] = Vector4(proj.m00_, proj.m11_, proj.m22_, proj.m33_);
+                        }
+
                         graphics->SetShaderParameter(PSP_LIGHTMATRICES, shadowMatrices[0].Data(), 16 * numSplits);
+                        graphics->SetShaderParameter(PSP_SHADOWPROJS, shadowProjs[0].Data(), 4 * numSplits);
                     }
                     break;
 
