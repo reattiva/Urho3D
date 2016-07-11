@@ -2802,9 +2802,11 @@ void Graphics::PrepareDraw()
             impl_->depthStencilView_ = (ID3D11DepthStencilView*)depthStencil_->GetReadOnlyView();
 
         for (unsigned i = 0; i < MAX_RENDERTARGETS; ++i)
-            impl_->renderTargetViews_[i] =
-                (renderTargets_[i] && renderTargets_[i]->GetUsage() == TEXTURE_RENDERTARGET) ?
-                    (ID3D11RenderTargetView*)renderTargets_[i]->GetRenderTargetView() : 0;
+        {
+            bool isRenderTarget = renderTargets_[i] && (renderTargets_[i]->GetUsage() == TEXTURE_RENDERTARGET ||
+                renderTargets_[i]->GetUsage() == TEXTURE_COMPUTETARGET);
+            impl_->renderTargetViews_[i] = isRenderTarget ? (ID3D11RenderTargetView*)renderTargets_[i]->GetRenderTargetView() : 0;
+        }
         // If rendertarget 0 is null and not doing depth-only rendering, render to the backbuffer
         // Special case: if rendertarget 0 is null and depth stencil has same size as backbuffer, assume the intention is to do
         // backbuffer rendering with a custom depth stencil
