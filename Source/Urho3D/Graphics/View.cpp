@@ -1470,15 +1470,15 @@ void View::ExecuteRenderPathCommands()
                 lastCommandIndex = i;
         }
 
-        for (unsigned i = 0; i < renderPath_->commands_.Size(); ++i)
+        for (unsigned ic = 0; ic < renderPath_->commands_.Size(); ++ic)
         {
-            RenderPathCommand& command = renderPath_->commands_[i];
+            RenderPathCommand& command = renderPath_->commands_[ic];
             if (!actualView->IsNecessary(command))
                 continue;
 
             bool viewportRead = actualView->CheckViewportRead(command);
             bool viewportWrite = actualView->CheckViewportWrite(command);
-            bool beginPingpong = actualView->CheckPingpong(i);
+            bool beginPingpong = actualView->CheckPingpong(ic);
 
             // Has the viewport been modified and will be read as a texture by the current command?
             if (viewportRead && viewportModified)
@@ -1538,9 +1538,9 @@ void View::ExecuteRenderPathCommands()
                     // However, on OpenGL we can not reliably do this in case the final target is the backbuffer, and we want to
                     // render depth buffer sensitive debug geometry afterward (backbuffer and textures can not share depth)
 #ifndef URHO3D_OPENGL
-                    if (i == lastCommandIndex && command.type_ == CMD_QUAD)
+                    if (ic == lastCommandIndex && command.type_ == CMD_QUAD)
 #else
-                    if (i == lastCommandIndex && command.type_ == CMD_QUAD && renderTarget_)
+                    if (ic == lastCommandIndex && command.type_ == CMD_QUAD && renderTarget_)
 #endif
                         currentRenderTarget_ = renderTarget_;
                 }
@@ -1692,7 +1692,7 @@ void View::ExecuteRenderPathCommands()
 
                     using namespace CommandEvent;
                     VariantMap& eventData = GetEventDataMap();
-                    eventData[P_COMMANDINDEX] = i;
+                    eventData[P_COMMANDINDEX] = ic;
                     SendEvent(E_COMMANDEVENT, eventData);
                 }
                 break;
