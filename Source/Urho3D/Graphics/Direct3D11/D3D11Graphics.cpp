@@ -2219,7 +2219,10 @@ void Graphics::Unbind(unsigned* unbindEnds)
     else if (firstUnbindRT < M_MAX_UNSIGNED && firstUnbindUav == M_MAX_UNSIGNED)
     {
         for (unsigned i = firstUnbindRT; i <= lastUnbindRT; ++i)
+        {
             impl_->renderTargetViews_[i] = 0;
+            renderTargets_[i] = 0;
+        }
 
         unsigned numRTVs = lastUnbindRT - firstUnbindRT + 1;
         impl_->deviceContext_->OMSetRenderTargetsAndUnorderedAccessViews(
