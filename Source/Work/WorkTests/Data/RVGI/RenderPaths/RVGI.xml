@@ -1,0 +1,144 @@
+<renderpath>
+    <rendertarget name="albedo" sizedivisor="1 1" format="rgba" />
+    <rendertarget name="normal" sizedivisor="1 1" format="rgba" />
+    <rendertarget name="depth" sizedivisor="1 1" format="lineardepth" />
+
+    <rendertarget name="array0" height="32" width="32" layers="32" format="rgba" filter="true" compute="true" />
+    <rendertarget name="array1" height="32" width="32" layers="32" format="rgba" filter="true" compute="true" />
+    <rendertarget name="array2" height="32" width="32" layers="32" format="rgba" filter="true" compute="true" />
+
+    <rendertarget name="array3" height="32" width="32" layers="32" format="rgba" filter="false" compute="true" />
+    <rendertarget name="array4" height="32" width="32" layers="32" format="rgba" filter="false" compute="true" />
+    <rendertarget name="array5" height="32" width="32" layers="32" format="rgba" filter="false" compute="true" />
+
+    <!--
+    The structuredbuffer is bound as UAV slot 4 in GridClear and GridFill, and bound as SRV slot 6 in GridVis and GridLights.
+    However CS UAV are different from VS, GS, PS UAV, so when we exit a CS we need to unbind everything.
+    -->
+
+    <command type="clear" enabled="1" color="fog" depth="1.0" stencil="0" />
+
+    <command type="clear" enable="0" color="0 0 0 0" output="albedo" />
+
+    <!-- Clear the voxel grid -->
+    <command type="compute" enabled="1" cs="GridClear" unbind=";;4" /> 
+
+    <!-- The usual deferred scene pass to populate the albedo, normal and depth render targets -->
+    <command type="scenepass" enabled="1" pass="deferred" marktostencil="true" vertexlights="true" metadata="gbuffer">
+        <output index="0" name="viewport" />
+        <output index="1" name="albedo" />
+        <output index="2" name="normal" />
+        <output index="3" name="depth" />
+    </command>
+
+    <!-- Populate the voxel grid: for each voxel with geometry we search for the best color and 4 best normals -->
+    <!-- Todo: use a smaller render target! -->
+    <command type="scenepass" enabled="1" tag="GridFill" pass="GridFill" output="" unbind=";;4" /> 
+    
+    <!-- Show colors stored in the voxel grid buffer -->
+    <command type="quad" enabled="0" tag="GridVis" vs="GridVis" ps="GridVis" output="viewport" unbind=";6;" >
+        <texture unit="diffuse" name="albedo" />
+        <texture unit="depth" name="depth" />        
+    </command>
+
+    <!-- Turn illuminated voxel into virtual point light, represented by second order spherical harmonics coeffs, 
+         store them in 3 texture arrays. Only directional light are supported. Getting good shadows has proven difficult.
+         These 2 commands are executed as one. This mess is only to reuse the shadow maps created by lightvolumes. -->
+    <!-- Unbind the structured buffer from reading on slot 6, in GridLightPropagate it is still read but from
+         a compute shader. -->
+    <command type="lightvolumesgi" enabled="1" vs="DeferredLight" ps="DeferredLight" unbind="0 2;6;" >
+        <texture unit="albedo" name="albedo" />
+        <texture unit="normal" name="normal" />
+        <texture unit="depth" name="depth" />
+    </command>
+    <!-- Todo: this unbind does not work, the 'ic' cunter is incremented but 'command' is not -->
+    <!-- Note: instances are overwritten by code -->
+    <command type="nulltriangle" enabled="1" tag="GridLights" vs="GridLights" gs="GridLights" ps="GridLights" 
+             psdefines="" depthstencil="none" instances="32" >
+        <output index="0" name="array0" unbind="" />
+        <output index="1" name="array1" unbind="" />
+        <output index="2" name="array2" unbind="" />
+        <texture unit="depth" name="depth" />
+    </command>
+
+    <!-- Show colors stored in a texture array -->
+    <command type="quad" enabled="0" tag="GridArrayVis" vs="GridArrayVis" ps="GridArrayVis" output="viewport">
+        <texture unit="diffuse" name="viewport" />
+        <texture unit="1" name="array0" unbind="" />
+        <texture unit="depth" name="depth" />        
+    </command>
+
+    <!-- Show the shadow map in the upper-right corner -->
+    <command type="quad" enabled="0" vs="ShowShadowMap" ps="ShowShadowMap" psdefines="DIRLIGHT PCF_SHADOW SHADOW"  output="viewport">
+        <texture unit="diffuse" name="viewport" />
+        <texture unit="depth" name="depth" /> 
+    </command>
+
+    <!-- Propagate light to adjacent cells. We read from 3 textures arrays (R,G,B) and write to 3 others. -->
+    <!-- Before compute remember to unbind renderTargets_[0], otherwise the SetTexture will get a backup texture and will not work -->
+    <!-- Unbind texture on slot 0,1,2 and also the structured buffer on 6 so we can clear it in GridClear.
+         Unbind output (for compute shaders these are UAV not RT) on slot 0,1,2. -->
+    <command type="compute" enabled="1" cs="GridLightPropagate" csdefines="OUTARRAYS35" unbind=";0 2;0 2" >
+        <output index="0" name="array3" />
+        <output index="1" name="array4" />
+        <output index="2" name="array5" />
+        <texture unit="0" name="array0" />
+        <texture unit="1" name="array1" />
+        <texture unit="2" name="array2" />
+    </command>
+
+    <command type="quad" enabled="0" tag="GridArrayVis" vs="GridArrayVis" ps="GridArrayVis" output="viewport">
+        <texture unit="diffuse" name="viewport" />
+        <texture unit="1" name="array3" unbind="" />
+        <texture unit="depth" name="depth" />        
+    </command>
+
+    <!-- Propagate light to adjacent cells but block it if the voxel has geometry in it -->
+    <!-- When USE_OCCLUSION is used, we need to unbind the structured buffer on slot 6 so we can clear it in GridClear. -->
+    <command type="compute" enabled="1" cs="GridLightPropagate" csdefines="OUTARRAYS02 USE_OCCLUSION" unbind=";0 2;0 2" >
+        <output index="0" name="array0" />
+        <output index="1" name="array1" />
+        <output index="2" name="array2" />
+        <texture unit="0" name="array3" />
+        <texture unit="1" name="array4" />
+        <texture unit="2" name="array5" />
+    </command>
+
+    <!-- By using repeat > 0 we can repeat the previous and this command -->
+    <command type="compute" enabled="1" cs="GridLightPropagate" csdefines="OUTARRAYS35 USE_OCCLUSION" unbind=";0 2;0 2" jump="-1" repeat="0">
+        <output index="0" name="array3" />
+        <output index="1" name="array4" />
+        <output index="2" name="array5" />
+        <texture unit="0" name="array0" />
+        <texture unit="1" name="array1" />
+        <texture unit="2" name="array2" />
+    </command>
+
+    <command type="compute" enabled="1" cs="GridLightPropagate" csdefines="OUTARRAYS02 USE_OCCLUSION" unbind=";0 2 6;0 2" >
+        <output index="0" name="array0" />
+        <output index="1" name="array1" />
+        <output index="2" name="array2" />
+        <texture unit="0" name="array3" />
+        <texture unit="1" name="array4" />
+        <texture unit="2" name="array5" />
+    </command>
+
+    <command type="quad" enabled="0" tag="GridArrayVis" vs="GridArrayVis" ps="GridArrayVis" output="viewport">
+        <texture unit="diffuse" name="viewport" />
+        <texture unit="1" name="array0" unbind="" />
+        <texture unit="depth" name="depth" />        
+    </command>
+
+    <!-- Final composition by applying spherical harmonics illumination. Add it to the deferred result in the viewport.
+         Here we use 'metadata' to enable the stencil test. -->
+    <command type="nulltriangle" enabled="1" tag="GridFinal" vs="GridFinal" ps="GridFinal" 
+             psdefines="" blend="add" output="viewport" unbind=";0 2;" depthstencil="deferred" metadata="stencil" >
+        <texture unit="0" name="array0" />
+        <texture unit="1" name="array1" />
+        <texture unit="2" name="array2" />
+        <texture unit="3" name="albedo" />
+        <texture unit="4" name="normal" />
+        <texture unit="5" name="depth" />
+    </command>
+
+</renderpath>

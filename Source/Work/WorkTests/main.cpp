@@ -10,10 +10,11 @@
 #include "SampleTA.h"
 #include "SampleTARW.h"
 #include "SampleScene.h"
+#include "SampleRVGI.h"
 
 int getNumber()
 {
-    return 7;
+    return 8;
 }
 
 int RunApplication()
@@ -43,6 +44,9 @@ int RunApplication()
         break;
     case 7:
         application = new SampleScene(context);
+        break;
+    case 8:
+        application = new SampleRVGI(context);
         break;
     }
 
