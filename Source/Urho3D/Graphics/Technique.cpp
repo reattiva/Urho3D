@@ -75,6 +75,7 @@ Pass::Pass(const String& name) :
     blendMode_(BLEND_REPLACE),
     depthTestMode_(CMP_LESSEQUAL),
     lightingMode_(LIGHTING_UNLIT),
+    cullMode_(MAX_CULLMODES),
     shadersLoadedFrameNumber_(0),
     depthWrite_(true),
     alphaMask_(false),
@@ -108,6 +109,11 @@ void Pass::SetDepthTestMode(CompareMode mode)
 void Pass::SetLightingMode(PassLightingMode mode)
 {
     lightingMode_ = mode;
+}
+
+void Pass::SetCullMode(CullMode mode)
+{
+    cullMode_ = mode;
 }
 
 void Pass::SetDepthWrite(bool enable)

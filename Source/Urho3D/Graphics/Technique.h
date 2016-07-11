@@ -53,6 +53,8 @@ public:
     void SetDepthTestMode(CompareMode mode);
     /// Set pass lighting mode, affects what shader variations will be attempted to be loaded.
     void SetLightingMode(PassLightingMode mode);
+    /// Set optional cull mode.
+    void SetCullMode(CullMode mode);
     /// Set depth write on/off.
     void SetDepthWrite(bool enable);
     /// Set alpha masking hint. Completely opaque draw calls will be performed before alpha masked.
@@ -90,6 +92,9 @@ public:
 
     /// Return pass lighting mode.
     PassLightingMode GetLightingMode() const { return lightingMode_; }
+
+    /// Return optional cull mode.
+    CullMode GetCullMode() const { return cullMode_; }
 
     /// Return last shaders loaded frame number.
     unsigned GetShadersLoadedFrameNumber() const { return shadersLoadedFrameNumber_; }
@@ -139,6 +144,8 @@ private:
     CompareMode depthTestMode_;
     /// Lighting mode.
     PassLightingMode lightingMode_;
+    /// Optional cull mode.
+    CullMode cullMode_;
     /// Last shaders loaded frame number.
     unsigned shadersLoadedFrameNumber_;
     /// Depth write mode.
