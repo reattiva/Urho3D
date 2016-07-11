@@ -503,7 +503,7 @@ bool View::Define(RenderSurface* renderTarget, Viewport* viewport)
             if (CheckViewportWrite(command))
                 deferredAmbient_ = true;
         }
-        else if (command.type_ == CMD_LIGHTVOLUMES)
+        else if (command.type_ == CMD_LIGHTVOLUMES || command.type_ == CMD_LIGHTVOLUMESGI)
         {
             lightVolumeCommand_ = &command;
             deferred_ = true;
@@ -1663,6 +1663,69 @@ void View::ExecuteRenderPathCommands()
                         {
                             SetupLightVolumeBatch(i->volumeBatches_[j]);
                             i->volumeBatches_[j].Draw(this, camera_, false);
+                        }
+                    }
+
+                    graphics_->SetScissorTest(false);
+                    graphics_->SetStencilTest(false);
+                }
+                break;
+
+            case CMD_LIGHTVOLUMESGI:
+                // Render shadow maps + light volumes + light global illumination
+                if (!actualView->lightQueues_.Empty())
+                {
+                    URHO3D_PROFILE(RenderLightVolumesGI);
+
+                    // Search for the next command, it must be an enabled Null Triangle command
+                    if (ic == lastCommandIndex)
+                        break;
+                    RenderPathCommand* nextCommand = &renderPath_->commands_[ic+1];
+                    if (!nextCommand || !nextCommand->enabled_ || nextCommand->type_ != CMD_NULLTRIANGLE)
+                        break;
+                    ++ic;
+
+                    SetRenderTargets(command);
+                    for (unsigned i = 0; i < actualView->lightQueues_.Size(); ++i)
+                    {
+                        LightBatchQueue& lightQueue = actualView->lightQueues_[i];
+
+                        // If reusing shadowmaps, render each of them before the lit batches
+                        if (renderer_->GetReuseShadowMaps() && lightQueue.shadowMap_)
+                        {
+                            RenderShadowMap(lightQueue);
+                            SetRenderTargets(command);
+                        }
+                        else if (i != 0)
+                            // After the nulltriangle restore the lightvolume render targets
+                            SetRenderTargets(command);
+
+                        SetTextures(command);
+
+                        for (unsigned j = 0; j < lightQueue.volumeBatches_.Size(); ++j)
+                        {
+                            Batch& volumeBatch = lightQueue.volumeBatches_[j];
+
+                            SetupLightVolumeBatch(volumeBatch);
+                            volumeBatch.Draw(this, camera_, false);
+                        }
+
+                        SetRenderTargets(*nextCommand);
+                        SetTextures(*nextCommand);
+
+                        for (unsigned j = 0; j < lightQueue.volumeBatches_.Size(); ++j)
+                        {
+                            Batch lightQuadBatch = lightQueue.volumeBatches_[j];
+                            renderer_->SetLightVolumeBatchShaders(lightQuadBatch, camera_,
+                                nextCommand->vertexShaderName_, nextCommand->pixelShaderName_,
+                                nextCommand->vertexShaderDefines_, nextCommand->pixelShaderDefines_);
+
+                            lightQuadBatch.geometryShader_ = graphics_->GetShader(GS, nextCommand->geometryShaderName_,
+                                lightQuadBatch.vertexShader_->GetDefines());
+
+                            SetupLightVolumeBatch(lightQuadBatch);
+                            lightQuadBatch.Prepare(this, camera_, true, false);
+                            RenderNullTriangle(*nextCommand);
                         }
                     }
 

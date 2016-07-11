@@ -46,7 +46,8 @@ enum RenderCommandType
     CMD_RENDERUI,
     CMD_COMPUTE,
     CMD_EVENT,
-    CMD_NULLTRIANGLE
+    CMD_NULLTRIANGLE,
+    CMD_LIGHTVOLUMESGI
 };
 
 /// Rendering path sorting modes.

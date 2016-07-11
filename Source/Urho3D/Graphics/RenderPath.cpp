@@ -49,6 +49,7 @@ static const char* commandTypeNames[] =
     "compute",
     "event",
     "nulltriangle",
+    "lightvolumesgi",
     0
 };
 
@@ -173,6 +174,7 @@ void RenderPathCommand::Load(const XMLElement& element)
         break;
 
     case CMD_LIGHTVOLUMES:
+    case CMD_LIGHTVOLUMESGI:
     case CMD_QUAD:
     case CMD_NULLTRIANGLE:
         vertexShaderName_ = element.GetAttribute("vs");
