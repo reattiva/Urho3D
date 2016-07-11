@@ -117,6 +117,7 @@ struct URHO3D_API RenderPathCommand
 {
     /// Construct.
     RenderPathCommand() :
+        shaderParametersDirty_(false),
         clearFlags_(0),
         blendMode_(BLEND_REPLACE),
         enabled_(true),
@@ -198,6 +199,8 @@ struct URHO3D_API RenderPathCommand
     String textureNames_[MAX_TEXTURE_UNITS];
     /// %Shader parameters.
     HashMap<StringHash, Variant> shaderParameters_;
+    /// Shader parameters changed flag.
+    bool shaderParametersDirty_;
     /// Output rendertarget names and faces.
     Vector<Pair<String, CubeMapFace> > outputs_;
     /// Depth-stencil output name.

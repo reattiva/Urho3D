@@ -1570,6 +1570,7 @@ void View::ExecuteRenderPathCommands()
                     {
                         URHO3D_PROFILE(RenderScenePass);
 
+                        StoreCommandShaderParameters(command);
                         SetRenderTargets(command);
                         bool allowDepthWrite = SetTextures(command);
                         graphics_->SetClipPlane(camera_->GetUseClipping(), camera_->GetClipPlane(), camera_->GetView(),
@@ -1947,6 +1948,17 @@ void View::RenderNullTriangle(RenderPathCommand& command)
         graphics_->DrawInstanced(TRIANGLE_LIST, 0, 3, 0, 3, instances);
     else
         graphics_->Draw(TRIANGLE_LIST, 0, 3);
+}
+
+void View::StoreCommandShaderParameters(RenderPathCommand& command)
+{
+    if (command.shaderParametersDirty_)
+    {
+        command.shaderParametersDirty_ = false;
+        commandShaderParameters_ = command.shaderParameters_;
+    }
+    else
+        commandShaderParameters_.Clear();
 }
 
 bool View::IsNecessary(const RenderPathCommand& command)

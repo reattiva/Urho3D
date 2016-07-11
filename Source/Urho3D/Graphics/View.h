@@ -187,6 +187,11 @@ public:
     /// Draw a fullscreen quad. Shaders and renderstates must have been set beforehand.
     void DrawFullscreenQuad(bool nearQuad);
 
+    /// Store the current command shader parameters if they have changed.
+    void StoreCommandShaderParameters(RenderPathCommand& command);
+    /// Get the stored shader parameters.
+    HashMap<StringHash, Variant> GetCommandShaderParameters() const { return commandShaderParameters_; }
+
 private:
     /// Query the octree for drawable objects.
     void GetDrawables();
@@ -425,6 +430,8 @@ private:
     const RenderPathCommand* lightVolumeCommand_;
     /// Flag for scene being resolved from the backbuffer.
     bool usedResolve_;
+    /// Current command shader paramaters.
+    HashMap<StringHash, Variant> commandShaderParameters_;
 };
 
 }

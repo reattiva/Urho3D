@@ -592,6 +592,11 @@ void Batch::Prepare(View* view, Camera* camera, bool setModelTransform, bool all
         }
     }
 
+    // Set command-specific shader parameters, only if they have changed
+    const HashMap<StringHash, Variant>& commandParams = view->GetCommandShaderParameters();
+    for (HashMap<StringHash, Variant>::ConstIterator k = commandParams.Begin(); k != commandParams.End(); ++k)
+        graphics->SetShaderParameter(k->first_, k->second_);
+
     // Set zone texture if necessary
 #ifdef DESKTOP_GRAPHICS
     if (zone_ && graphics->HasTextureUnit(TU_ZONE))

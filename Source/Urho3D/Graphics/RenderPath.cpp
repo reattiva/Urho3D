@@ -284,6 +284,7 @@ void RenderPathCommand::SetTextureName(TextureUnit unit, const String& name)
 
 void RenderPathCommand::SetShaderParameter(const String& name, const Variant& value)
 {
+    shaderParametersDirty_ = true;
     shaderParameters_[name] = value;
 }
 
