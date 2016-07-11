@@ -419,6 +419,7 @@ extern URHO3D_API const StringHash VSP_SKINMATRICES;
 extern URHO3D_API const StringHash VSP_VERTEXLIGHTS;
 extern URHO3D_API const StringHash PSP_AMBIENTCOLOR;
 extern URHO3D_API const StringHash PSP_CAMERAPOS;
+extern URHO3D_API const StringHash PSP_CAMERAVIEW;
 extern URHO3D_API const StringHash PSP_DELTATIME;
 extern URHO3D_API const StringHash PSP_DEPTHRECONSTRUCT;
 extern URHO3D_API const StringHash PSP_ELAPSEDTIME;

@@ -42,6 +42,7 @@ uniform float4x3 cZone;
 // Pixel shader uniforms
 uniform float3 cAmbientColor;
 uniform float3 cCameraPosPS;
+uniform float4x3 cCameraViewPS;
 uniform float cDeltaTimePS;
 uniform float4 cDepthReconstruct;
 uniform float cElapsedTimePS;
@@ -149,6 +150,7 @@ cbuffer FramePS : register(b0)
 cbuffer CameraPS : register(b1)
 {
     float3 cCameraPosPS;
+    float4x3 cCameraViewPS;
     float4 cDepthReconstruct;
     float2 cGBufferInvSize;
     float cNearClipPS;

@@ -718,6 +718,7 @@ void View::SetCameraShaderParameters(Camera* camera, bool setProjection)
     graphics_->SetShaderParameter(VSP_VIEWINV, cameraEffectiveTransform);
     graphics_->SetShaderParameter(VSP_VIEW, camera->GetView());
     graphics_->SetShaderParameter(PSP_CAMERAPOS, cameraEffectiveTransform.Translation());
+    graphics_->SetShaderParameter(PSP_CAMERAVIEW, camera->GetView());
 
     float nearClip = camera->GetNearClip();
     float farClip = camera->GetFarClip();
