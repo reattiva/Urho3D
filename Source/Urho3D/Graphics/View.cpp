@@ -2023,7 +2023,10 @@ void View::RenderNullTriangle(RenderPathCommand& command)
     graphics_->SetFillMode(FILL_SOLID);
     graphics_->SetClipPlane(false);
     graphics_->SetScissorTest(false);
-    graphics_->SetStencilTest(false);
+    if (command.metadata_ == "stencil")
+        graphics_->SetStencilTest(true, CMP_NOTEQUAL);
+    else
+        graphics_->SetStencilTest(false);
     graphics_->SetCullMode(CULL_NONE);
 
     graphics_->SetIndexBuffer(0);
