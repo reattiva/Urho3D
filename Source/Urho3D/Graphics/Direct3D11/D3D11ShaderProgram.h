@@ -108,7 +108,7 @@ public:
                 else if (resource.type_ == SR_UAV_TYPED)
                 {
                     // Get the texture where compute shaders can write to
-                    Texture* texture = graphics->GetComputeTarget(resourceHash);
+                    Texture* texture = graphics->GetComputeTarget(resourceHash, resource.bindSlot_);
                     if (!texture)
                         URHO3D_LOGERROR("UAV texture " + resource.name_ + " not found");
                     else if (texture->GetUsage() != TEXTURE_COMPUTETARGET)

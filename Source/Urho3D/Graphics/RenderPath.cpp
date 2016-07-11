@@ -220,14 +220,17 @@ void RenderPathCommand::Load(const XMLElement& element)
     }
 
     // By default use 1 output, which is the viewport
-    outputs_.Resize(1);
-    outputs_[0] = MakePair(String("viewport"), FACE_POSITIVE_X);
-    if (element.HasAttribute("output"))
-        outputs_[0].first_ = element.GetAttribute("output");
-    if (element.HasAttribute("face"))
-        outputs_[0].second_ = (CubeMapFace)element.GetInt("face");
-    if (element.HasAttribute("depthstencil"))
-        depthStencilName_ = element.GetAttribute("depthstencil");
+    if (type_ != CMD_COMPUTE && type_ != CMD_EVENT)
+    {
+        outputs_.Resize(1);
+        outputs_[0] = MakePair(String("viewport"), FACE_POSITIVE_X);
+        if (element.HasAttribute("output"))
+            outputs_[0].first_ = element.GetAttribute("output");
+        if (element.HasAttribute("face"))
+            outputs_[0].second_ = (CubeMapFace)element.GetInt("face");
+        if (element.HasAttribute("depthstencil"))
+            depthStencilName_ = element.GetAttribute("depthstencil");
+    }
     // Check for defining multiple outputs
     XMLElement outputElem = element.GetChild("output");
     while (outputElem)

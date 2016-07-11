@@ -1746,8 +1746,12 @@ void View::ExecuteRenderPathCommands()
                 {
                     URHO3D_PROFILE(ComputeCommand);
 
+                    for (unsigned index = 0; index < command.outputs_.Size(); ++index)
+                        graphics_->SetComputeTargetSlot(command.outputs_[index].first_, index);
+                    SetTextures(command);
                     SetShaders(command);
                     Compute(command);
+                    graphics_->ClearComputeTargetsSlots();
                 }
                 break;
 
@@ -2052,7 +2056,7 @@ void View::StoreCommandShaderParameters(RenderPathCommand& command)
 
 bool View::IsNecessary(const RenderPathCommand& command)
 {
-    return command.enabled_ && command.outputs_.Size() &&
+    return command.enabled_ && (command.outputs_.Size() || command.type_ == CMD_COMPUTE || command.type_ == CMD_EVENT) &&
            (command.type_ != CMD_SCENEPASS || !batchQueues_[command.passIndex_].IsEmpty());
 }
 

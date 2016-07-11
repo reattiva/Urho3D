@@ -2298,8 +2298,24 @@ void Graphics::AddComputeTarget(StringHash targetName, Texture *texture)
     computeTargets_[targetName] = texture;
 }
 
-Texture *Graphics::GetComputeTarget(StringHash targetName)
+void Graphics::ClearComputeTargetsSlots()
 {
+    computeTargetsSlots_.Clear();
+}
+
+void Graphics::SetComputeTargetSlot(StringHash targetName, unsigned slot)
+{
+    computeTargetsSlots_[slot] = targetName;
+}
+
+Texture *Graphics::GetComputeTarget(StringHash targetName, unsigned slot)
+{
+    if (!computeTargetsSlots_.Empty())
+    {
+        HashMap<unsigned, StringHash >::Iterator j = computeTargetsSlots_.Find(slot);
+        if (j != computeTargetsSlots_.End())
+            targetName = j->second_;
+    }
     HashMap<StringHash, WeakPtr<Texture> >::Iterator i = computeTargets_.Find(targetName);
     if (i != computeTargets_.End())
         return i->second_.Get();

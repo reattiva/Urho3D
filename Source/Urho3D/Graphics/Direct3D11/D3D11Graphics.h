@@ -526,8 +526,12 @@ public:
     void ClearComputeTargets();
     /// Add a compute target.
     void AddComputeTarget(StringHash targetName, Texture* texture);
+    /// Clear compute targets slots.
+    void ClearComputeTargetsSlots();
+    /// Set the slot of a compute target.
+    void SetComputeTargetSlot(StringHash targetName, unsigned slot);
     /// Get a compute target by name.
-    Texture* GetComputeTarget(StringHash targetName);
+    Texture* GetComputeTarget(StringHash targetName, unsigned slot);
 
     /// Return the API-specific alpha texture format.
     static unsigned GetAlphaFormat();
@@ -774,6 +778,8 @@ private:
     HashMap<StringHash, SharedPtr<ShaderBuffer> > shaderBuffers_;
     /// Compute targets.
     HashMap<StringHash, WeakPtr<Texture> > computeTargets_;
+    /// Compute targets slots.
+    HashMap<unsigned, StringHash > computeTargetsSlots_;
     /// Shader programs.
     ShaderProgramMap shaderPrograms_;
     /// Shader program in use.
