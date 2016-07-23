@@ -33,7 +33,7 @@ cbuffer CustomUB : register(b6)
     float2 cGridCellSize;
     float4 cGridSnappedPosition;
     float4 cGlobalIllumParams;
-    float cFactor;
+    float4 cFactors;
 };
 
 StructuredBuffer<Voxel> BufferGrid: register(t6);

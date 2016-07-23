@@ -44,7 +44,7 @@ cbuffer CustomUB : register(b6)
     float2 cGridCellSize;
     float4 cGridSnappedPosition;
     float4 cGlobalIllumParams;
-    float cFactor;
+    float4 cFactors;
 };
 
 void PS(
@@ -60,7 +60,8 @@ void PS(
 
     float3 color = Sample2D(DiffMap, iScreenPos).rgb;
 
-#if 1
+    // Show projection
+#if 0
     float3 offset = (worldPos - cGridSnappedPosition.xyz) * cGridCellSize.y;
     offset += float3(HALFCELLS, HALFCELLS, HALFCELLS);
     offset = round(offset);
@@ -78,6 +79,39 @@ void PS(
     else
         oColor = float4(color, 1.0);
 #endif
+
+    // Show slices
+#if 1
+    const float CELLS = HALFCELLS * 2.0;
+    const float COLUMNS = 8.0;
+    const float ROWS = CELLS / COLUMNS;
+    const float STARTY = 0.0;//1.0 - ROWS / COLUMNS; // 1 - ROWS * CELLS * SIZE
+
+    float layerX;
+    float cellX = modf(iScreenPos.x * COLUMNS, layerX);
+    float layerY;
+    float cellY = modf((iScreenPos.y - STARTY) * COLUMNS, layerY); // COLUMNS = ROWS / (1 - STARTY)
+
+    float layer = CELLS - 1.0 - (layerX + layerY * COLUMNS);
+    float3 offset = float3(cellX, (1.0-cellY), layer/CELLS);
+
+    if (offset.x >= 0.0 && offset.y >= 0.0 && offset.z >= 0.0 && 
+        offset.x < 1.0 && offset.y < 1.0 && offset.z < HALFCELLS*2)
+    {
+        #if 0
+        // Show X-Y slices
+        float3 texCoord = float3(offset.x, offset.y, offset.z * CELLS);
+        #else
+        // Show X-Z slices
+        float3 texCoord = float3(offset.x, offset.z, offset.y * CELLS);
+        //float3 texCoord = float3(1.0-offset.x, offset.z, (1.0-offset.y) * CELLS);
+        #endif
+        oColor = float4(tArray.Sample(sArray, texCoord).rgb*3.0, 1.0);
+    }
+    else
+        oColor = float4(color, 1.0);
+#endif
+
 }
 
 #endif

@@ -82,7 +82,7 @@ cbuffer CustomUB : register(b6)
     float2 cGridCellSize;
     float4 cGridSnappedPosition;
     float4 cGlobalIllumParams;
-    float cFactor;
+    float4 cFactors;
 };
 
 // After calculating the texCoords into the 2D texture arrays, the SH-coeffs are trilinearly sampled and
@@ -140,10 +140,6 @@ float4 PS(VS_Output input) : SV_TARGET
 
     // Get offset -HALF..+HALF into grid = (positionWS - gridCenterWS) / gridCellSize
     float3 offset = (position.xyz - cGridSnappedPosition.xyz) * cGridCellSize.y;
-    //offset.z = -offset.z;
-#if 0
-    offset += float3(rand(offset.yz), rand(offset.zx), rand(offset.xy)) * 0.1 * cFactor;
-#endif
 
     // Debug
     //return float4(normal, 1.0);

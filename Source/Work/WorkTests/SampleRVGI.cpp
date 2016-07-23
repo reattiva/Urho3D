@@ -67,8 +67,7 @@ SampleRVGI::SampleRVGI(Context* context) :
     gridVisCommand_(0),
     gridFillCommand_(0),
     gridLightCommand_(0),
-    gridLightPropagate_(0),
-    gridFinal_(0)
+    gridLightPropagateCommand_(0)
 {
 }
 
@@ -157,7 +156,12 @@ void SampleRVGI::CreateScene()
     light->SetSpecularIntensity(0.5f);
     light->SetCastShadows(true);
     light->SetShadowBias(BiasParameters(0.00025f, 0.5f));
-    light->SetShadowCascade(CascadeParameters(20.0f, 50.0f, 200.0f, 0.0f, 0.8f));
+    light->SetShadowCascade(CascadeParameters(10.0f, 20.0f, 50.0f, 0.0f, 0.8f));
+
+    // Disable auto-focus of the shadow map, this generates jagged but more stable shadow.
+    // 0.5=first step of the quadratic quantization scale, 3.0=min height-width
+    //FocusParameters shadowFocusParams(false, false, true, 0.5f, 3.0f);
+    //light->SetShadowFocus(shadowFocusParams);
 
     if (0)
     {
@@ -301,8 +305,8 @@ void SampleRVGI::CreateScene()
 
         // Roof
         Node* wallNode2 = wallNode->Clone();
-        wallNode2->SetPosition(Vector3(0.0f, 2*HALFY+THICK*0.5f, 0.0f));
-        wallNode2->SetScale(Vector3(2.0f*HALFX, THICK, 2.0f*HALFX));
+        wallNode2->SetPosition(Vector3(0.0f, 2*HALFY+THICK, 0.0f));
+        wallNode2->SetScale(Vector3(2.0f*HALFX, THICK*2.0f, 2.0f*HALFX));
 
         // Left wall
         Node* wallNode3 = wallNode->Clone();
@@ -323,6 +327,10 @@ void SampleRVGI::CreateScene()
         wallNode6->SetScale(Vector3(THICK, 2*HALFY, HALFX));
         wallNode6->SetPosition(Vector3(0.0f, HALFY, HALFX-THICK*0.5f));
 
+        // Chimney
+        Node* chimneyNode = wallNode5->Clone();
+        chimneyNode->SetScale(Vector3(THICK, 2*HALFY, THICK));
+        chimneyNode->SetPosition(Vector3(0.0f, 4*HALFY, HALFX-THICK));
     }
 }
 
@@ -397,9 +405,10 @@ void SampleRVGI::SetupViewport()
             gridLightCommand_ = command;
             command->instances_ = GRID_CELLS;
         }
-        else if (command->tag_ == "GridFinal")
+
+        if (command->tag_ == "GridLightPropagate")
         {
-            gridFinal_ = command;
+            gridLightPropagateCommand_ = command;
         }
     }
 
@@ -407,6 +416,8 @@ void SampleRVGI::SetupViewport()
         URHO3D_LOGERROR("GridFill command not found");
     if (!gridVisCommand_)
         URHO3D_LOGERROR("GridVis command not found");
+    if (!gridLightPropagateCommand_)
+        URHO3D_LOGERROR("GridLightPropagateCommand command not found");
 
     for (unsigned i = 0; i < renderPath->renderTargets_.Size(); ++i)
     {
@@ -502,7 +513,7 @@ void SampleRVGI::UpdateGrid()
 {
     Vector3 cameraPos = cameraNode_->GetPosition();
     Vector3 cameraDir = cameraNode_->GetDirection();
-    Vector3 gridPos = cameraPos + cameraDir * GRID_SIZE * 0.5f;
+    Vector3 gridPos = cameraPos + cameraDir * GRID_SIZE * customUB_.distance;
     //Vector3 gridPos = Vector3(-3.0f, 4.0f, 6.0f);
 
     Vector3 gridSnapped = gridPos * customUB_.gridCellSize.y_;
@@ -563,8 +574,13 @@ void SampleRVGI::UpdateGrid()
             gridFillCommand_->SetShaderParameter("GridViewProjMatrix1", customUB_.gridViewProjMatrices[1]);
             gridFillCommand_->SetShaderParameter("GridViewProjMatrix2", customUB_.gridViewProjMatrices[2]);
             gridFillCommand_->SetShaderParameter("GlobalIllumParams", customUB_.globalIllumParams);
-            gridFillCommand_->SetShaderParameter("Factor", customUB_.factor);
+            gridFillCommand_->SetShaderParameter("Factors", customUB_.factors);
             customUB_.set = 10;
+        }
+
+        if (gridLightPropagateCommand_)
+        {
+            gridLightPropagateCommand_->repeats_ = customUB_.repeats;
         }
     }
 
@@ -578,13 +594,17 @@ void SampleRVGI::UpdateGrid()
     Log("GlobalIllumParams = " + customUB_.globalIllumParams.ToString());
     Log("Factor = " + String(customUB_.factor));
     Log("" + debugMatrix.ToString());
-#else
+#elif 1
     Log("--- Urho global illumination sample ---"
-        "\n[ALT] invert key function, [SHIFT] slow key function"
+        "\n[ALT] invert, [SHIFT] slower, [H] hide"
         "\n[R][F] rotate directional light"
-        "\n[X] flux amplifier " + String(customUB_.globalIllumParams.x_) +
-        "\n[C] occlusion amplifier " + String(customUB_.globalIllumParams.y_) +
-        "\n[V] GI diffuse power " + String(customUB_.globalIllumParams.z_)
+        "\n[Z] flux amplifier " + String(customUB_.globalIllumParams.x_) +
+        "\n[X] occlusion amplifier " + String(customUB_.globalIllumParams.y_) +
+        "\n[C] GI diffuse power " + String(customUB_.globalIllumParams.z_) +
+        "\n[V] GI propagate steps " + String(customUB_.repeats*2+4) +
+        "\n[B] shadow filter radius " + String(customUB_.factors.x_) +
+        "\n[N] shadow z offset " + String(customUB_.factors.y_) +
+        "\n[Y] camera distance " + String(customUB_.distance)
         );
 #endif
 
@@ -643,30 +663,76 @@ void SampleRVGI::MoveCamera(float timeStep)
     if (input->GetQualifierDown(QUAL_ALT))
         factor = -factor;
 
-    if (input->GetKeyDown('Z'))
+    if (input->GetKeyDown('Q'))
     {
         customUB_.dirty = true;
-        customUB_.factor += factor * 0.01f;
+        customUB_.factors.z_ += factor * 0.01f;
     }
-    if (input->GetKeyDown('X'))
+
+    if (input->GetKeyDown('B'))
+    {
+        customUB_.dirty = true;
+        customUB_.factors.x_ += factor * 0.01f;
+    }
+    if (input->GetKeyDown('N'))
+    {
+        customUB_.dirty = true;
+        customUB_.factors.y_ += factor * 0.01f;
+    }
+
+    Light* light = 0;
+    if (input->GetKeyDown('M') || input->GetKeyDown('K'))
+    {
+        Node* lightNode = scene_->GetChild("DirectionalLight");
+        if (lightNode)
+            light = lightNode->GetComponent<Light>();
+    }
+    if (light && input->GetKeyDown('M'))
+    {
+        light->SetShadowIntensity(light->GetShadowIntensity() + factor * 0.002f);
+    }
+    if (light && input->GetKeyPress('K'))
+    {
+        FocusParameters params = light->GetShadowFocus();
+        params.focus_ = !params.focus_;
+        light->SetShadowFocus(params);
+    }
+
+    if (input->GetKeyDown('Z'))
     {
         customUB_.dirty = true;
         customUB_.globalIllumParams.x_ += factor * 0.005f;
     }
-    if (input->GetKeyDown('C'))
+    if (input->GetKeyDown('X'))
     {
         customUB_.dirty = true;
         customUB_.globalIllumParams.y_ += factor * 0.005f;
     }
-    if (input->GetKeyDown('V'))
+    if (input->GetKeyDown('C'))
     {
         customUB_.dirty = true;
-        customUB_.globalIllumParams.z_ += factor * 0.005f;
+        customUB_.globalIllumParams.z_ += factor * 0.002f;
+    }
+    if (input->GetKeyPress('V'))
+    {
+        customUB_.dirty = true;
+        if (factor > 0.0f && customUB_.repeats < 100)
+            customUB_.repeats += 1;
+        if (factor < 0.0f && customUB_.repeats > 0)
+            customUB_.repeats -= 1;
     }
     if (input->GetKeyDown('R') || input->GetKeyDown('F'))
     {
         AnimateScene(factor * 0.005f, input->GetKeyDown('F'));
     }
+    if (input->GetKeyDown('Y'))
+    {
+        customUB_.dirty = true;
+        customUB_.distance += factor * 0.002f;
+    }
+
+    if (input->GetKeyPress('H'))
+        text_->SetVisible(!text_->IsVisible());
 
     if (input->GetKeyPress(KEY_T) && gridLightCommand_)
     {

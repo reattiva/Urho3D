@@ -11,7 +11,7 @@ cbuffer CustomUB : register(b6)
     float4x4 cGridViewProjMatrix2;
     float2 cGridCellSize;
     float4 cGridSnappedPosition;
-    float cFactor;
+    float4 cFactors;
 };
 
 void VS(
@@ -61,18 +61,6 @@ void PS(
     const float size = 0.3;       
     if (iScreenPos.x > (1-size) && iScreenPos.y < size)
     {
-        //float depth = Sample2DLod0(DepthBuffer, iScreenPos).r;
-        //float4 radius = GetShadowPos(float4(1.0,1.0,0.0,1.0), depth) * cFactor;
-        
-        float2 center = float2(1-size/2.0, size/2.0);
-        float radius = cShadowMapInvSize * cFactor;
-        if (length(iScreenPos-center) < radius)
-        //if (abs(iScreenPos.x-center.x) < radius.x && abs(iScreenPos.y-center.y) < radius.y)
-        {
-            oColor = float4(1.0,0.0,0.0, 1.0);
-            return;
-        }
-
         float3 uv = float3((iScreenPos.x - 1 + size) / size, iScreenPos.y / size, 0.98);
         // As comparison with uv.z
         //float inLight = SampleShadow(ShadowMap, uv).r;

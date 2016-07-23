@@ -36,7 +36,7 @@ cbuffer CustomUB : register(b6)
     float2 cGridCellSize;
     float4 cGridSnappedPosition;
     float4 cGlobalIllumParams;
-    float cFactor;
+    float4 cFactors;
 };
 
 // Solid angles measures the area of the slice of a unit sphere subtended by a face of a 

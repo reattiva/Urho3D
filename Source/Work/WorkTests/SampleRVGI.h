@@ -82,8 +82,7 @@ private:
     RenderPathCommand* gridVisCommand_;
     RenderPathCommand* gridFillCommand_;
     RenderPathCommand* gridLightCommand_;
-    RenderPathCommand* gridLightPropagate_;
-    RenderPathCommand* gridFinal_;
+    RenderPathCommand* gridLightPropagateCommand_;
 
     HashSet<Pass*> gridFillPasses_;
 
@@ -95,18 +94,28 @@ private:
             gridCellSize(1.0f, 1.0f),
             gridSnappedPosition(0.0f, 0.0f, 0.0f, 0.0f),
             //globalIllumParams(2.55f, 1.25f, 0.45f, 0.0f),
-            globalIllumParams(3.0f, 3.0f, 0.6f, 0.0f),
-            factor(0.0f),
+            globalIllumParams(3.5f, 4.0f, 1.2f, 0.0f),
+            factors(0.0f, 0.0f, 0.0f, 0.0f),
+            repeats(3),
+            distance(0.5),
             dirty(true),
             set(0)
         {}
 
+        // front, left, bottom view matrices
         Matrix4 gridViewProjMatrices[3];
         // x = grid cell size, y = 1/x
         Vector2 gridCellSize;
+        // x,y,z = grid position, w=1
         Vector4 gridSnappedPosition;
+        // x=flux amplifier, y=occlusion amplifier, z=diffuse power, w=propagate steps
         Vector4 globalIllumParams;
-        float factor;
+        // x=shadow radius, y=shadow offset
+        Vector4 factors;
+        // propagation steps
+        unsigned repeats;
+        // camera distance from the grid center
+        float distance;
 
         bool dirty;
         unsigned set;

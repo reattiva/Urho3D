@@ -113,7 +113,8 @@
     </command>
 
     <!-- By using repeat > 0 we can repeat the previous and this command -->
-    <command type="compute" enabled="1" cs="GridLightPropagate" csdefines="OUTARRAYS35 USE_OCCLUSION" unbind=";0 2;0 2" jump="-1" repeat="0">
+    <command type="compute" enabled="1" cs="GridLightPropagate" csdefines="OUTARRAYS35 USE_OCCLUSION" unbind=";0 2;0 2" 
+             tag="GridLightPropagate" jump="-1" repeat="2">
         <output index="0" name="array3" />
         <output index="1" name="array4" />
         <output index="2" name="array5" />

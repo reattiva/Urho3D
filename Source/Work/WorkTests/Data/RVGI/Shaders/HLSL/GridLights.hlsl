@@ -95,7 +95,7 @@ cbuffer CustomUB : register(b6)
     float2 cGridCellSize;
     float4 cGridSnappedPosition;
     float4 cGlobalIllumParams;
-    float cFactor;
+    float4 cFactors;
 };
 
 //--------------------
@@ -124,28 +124,33 @@ static const float2 filterKernel[PCF_NUM_SAMPLES] =
 	float2(0.14383161f, -0.14100790f)
 };
 
-float GetKernelShadow1(float4 projWorldPos, float depth)
+float GetKernelShadow1(float4 projWorldPos, float depth, out float flag)
 {
     float4 shadowPos;
-    float2 radius = cShadowMapInvSize * 400.0 * cGridCellSize.x;// * (1.0 + cFactor * 0.1);
+    float2 radius = cShadowMapInvSize * 400.0 * cGridCellSize.x * (1.0 + cFactors.x * 0.2);
+    float4 limits;
 
     if (depth < cShadowSplits.x)
     {
+        limits = float4(0.0, 0.0, 0.5, 0.5);
         shadowPos = mul(projWorldPos, cLightMatricesPS[0]);
         radius *= cShadowProjs[0].xy;
     }
     else if (depth < cShadowSplits.y)
     {
+        limits = float4(0.5, 0.0, 1.0, 0.5);
         shadowPos = mul(projWorldPos, cLightMatricesPS[1]);
         radius *= cShadowProjs[1].xy;
     }
     else if (depth < cShadowSplits.z)
     {
+        limits = float4(0.0, 0.5, 0.5, 1.0);
         shadowPos = mul(projWorldPos, cLightMatricesPS[2]);
         radius *= cShadowProjs[2].xy;
     }
     else
     {
+        limits = float4(0.5, 0.5, 1.0, 1.0);
         shadowPos = mul(projWorldPos, cLightMatricesPS[3]);
         radius *= cShadowProjs[3].xy;
     }
@@ -153,9 +158,16 @@ float GetKernelShadow1(float4 projWorldPos, float depth)
         shadowPos.xyz /= shadowPos.w;
     #endif
 
-    //shadowPos.z -= 0.0015 + cFactor * 0.0001;
-    shadowPos.z -= 0.0012 + cFactor * 0.0001;
-        
+    //shadowPos.z -= 0.0015 + cFactors.y * 0.0001;
+    shadowPos.z -= 0.0012 + cFactors.y * 0.0001;
+
+    flag = 0.0;
+    if (shadowPos.x < limits.x || shadowPos.y < limits.y || shadowPos.x > limits.z || shadowPos.y > limits.w)
+    {
+        flag = 1.0;
+        return 0.0;
+    }
+
     float shadowTerm = 0.0f;
     [unroll]
     for(uint i=0; i<PCF_NUM_SAMPLES; ++i)
@@ -203,14 +215,14 @@ float GetKernelShadow2(float4 projWorldPos, float depth)
     {
         float4 samplePos = projWorldPos;
         // Ad hoc fix for the house example, reduce radius to get the ceiling black and the outside floor white
-        samplePos.xyz += samples[i] * cGridCellSize.x * (0.82);// + cFactor * 0.1);
+        samplePos.xyz += samples[i] * cGridCellSize.x * (0.82 + cFactors.x * 0.1);
         //samplePos.xyz += samples[i] * cGridCellSize.x;
         float4 shadowPos = GetShadowPos(samplePos, depth);
         #ifdef D3D11
             shadowPos.xyz /= shadowPos.w;
         #endif
-        //shadowPos.z -= 0.0018 + cFactor * 0.0001;
-        shadowPos.z -= 0.0010 + cFactor * 0.0001; // for the house example
+        //shadowPos.z -= 0.0018 + cFactors.y * 0.0001;
+        shadowPos.z -= 0.0010 + cFactors.y * 0.0001; // for the house example
         shadowTerm += round(SampleShadow(ShadowMap, shadowPos).r);  
     }
     shadowTerm /= NUM_SAMPLES;
@@ -271,11 +283,12 @@ PS_Output PS(GS_Output input)
 
     // Get shadow: 0 in shadow, 1 in light; re-using shadowMap from direct illumination
 #ifdef SHADOW
-//#ifdef TOGGLE
-    float shadowTerm = GetKernelShadow1(projWorldPos, depth);
-//#else
-//    float shadowTerm = GetKernelShadow2(projWorldPos, depth);
-//#endif
+    float flag;
+#ifndef TOGGLE
+    float shadowTerm = GetKernelShadow1(projWorldPos, depth, flag);
+#else
+    float shadowTerm = GetKernelShadow2(projWorldPos, depth);
+#endif
     //float shadowTerm = GetShadowDeferred(projWorldPos, depth);
 #else
     float shadowTerm = 1.0;
@@ -304,9 +317,10 @@ PS_Output PS(GS_Output input)
 	//output.fragColor0 = float4(abs(normal), 1.0);
     //output.fragColor0 = float4(nDotL, nDotL, nDotL, 1.0);
 	//output.fragColor0 = float4(shadowTerm, shadowTerm, shadowTerm, 1.0);
+	//output.fragColor0 = float4(shadowTerm, 0.0, flag, 1.0);
     //output.fragColor0 = float4(vDiffuse, 1.0);
     
-	// Output red/ green/ blue SH-coeffs 
+	// Output red/green/blue SH-coeffs 
 	output.fragColor0 = redSHCoeffs;
 	output.fragColor1 = greenSHCoeffs;
 	output.fragColor2 = blueSHCoeffs;
