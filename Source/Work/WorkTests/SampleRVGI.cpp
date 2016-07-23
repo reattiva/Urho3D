@@ -215,6 +215,63 @@ void SampleRVGI::CreateScene()
         MaterialAddGridFillPass(ninjaMaterial);
     }
 
+    if (0)
+    {
+        const float SIZE = 12.0f;
+        const float HEIGHT = SIZE/2.0f;
+        const float THICK = 1.0f;
+
+        Material* materialRed = cache->GetResource<Material>("Materials/DefaultGrey.xml");
+        assert(materialRed);
+        materialRed->SetShaderParameter("MatDiffColor", Color(1.0f, 0.0f, 0.0f, 1.0f));
+        SharedPtr<Material> materialBlue = materialRed->Clone();
+        materialBlue->SetShaderParameter("MatDiffColor", Color(0.0f, 0.0f, 1.0f, 1.0f));
+        SharedPtr<Material> materialWhite = materialRed->Clone();
+        materialWhite->SetShaderParameter("MatDiffColor", Color(0.6f, 0.6f, 0.6f, 1.0f));
+        SharedPtr<Material> materialYellow = materialRed->Clone();
+        materialYellow->SetShaderParameter("MatDiffColor", Color(1.0f, 1.0f, 0.0f, 1.0f));
+
+        MaterialAddGridFillPass(materialRed);
+        MaterialAddGridFillPass(materialBlue);
+        MaterialAddGridFillPass(materialWhite);
+        MaterialAddGridFillPass(materialYellow);
+
+        Node* floorNode = scene_->CreateChild("Box");
+        floorNode->SetPosition(Vector3(0.0f, -THICK/2.0f, 0.0f));
+        floorNode->SetScale(Vector3(SIZE, THICK, SIZE));
+        StaticModel* floorObject = floorNode->CreateComponent<StaticModel>();
+        floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+        floorObject->SetMaterial(materialWhite);
+        floorObject->SetCastShadows(true);
+        floorObject->SetOccluder(true);
+
+        Node* wallNodeUp = floorNode->Clone();
+        wallNodeUp->SetPosition(Vector3(0.0f, HEIGHT/2.0f, (SIZE-THICK)/2.0f));
+        wallNodeUp->SetScale(Vector3(SIZE, HEIGHT, THICK));
+        wallNodeUp->GetComponent<StaticModel>()->SetMaterial(materialWhite);
+
+        Node* wallNodeLeft = floorNode->Clone();
+        wallNodeLeft->SetPosition(Vector3(-(SIZE-THICK)/2.0f, HEIGHT/2.0f, 0.0f));
+        wallNodeLeft->SetScale(Vector3(THICK, HEIGHT, SIZE));
+        wallNodeLeft->GetComponent<StaticModel>()->SetMaterial(materialWhite);
+
+        Node* wallNodeRight = wallNodeLeft->Clone();
+        wallNodeRight->SetPosition(Vector3((SIZE-THICK)/2.0f, HEIGHT/2.0f, 0.0f));
+        wallNodeRight->GetComponent<StaticModel>()->SetMaterial(materialBlue);
+
+        Node* boxNode1 = floorNode->Clone();
+        boxNode1->SetPosition(Vector3(-SIZE/5.0f, SIZE/6.0f, SIZE/5.0f));
+        boxNode1->SetScale(Vector3(SIZE/4.0f, HEIGHT*0.8f, SIZE/4.0f));
+        boxNode1->SetRotation(Quaternion(0.0f, -15.0f, 0.0f));
+        boxNode1->GetComponent<StaticModel>()->SetMaterial(materialRed);
+
+        Node* boxNode2 = floorNode->Clone();
+        boxNode2->SetPosition(Vector3(SIZE/8.0f, SIZE/10.0f, -SIZE/8.0f));
+        boxNode2->SetScale(SIZE/5.0f);
+        boxNode2->SetRotation(Quaternion(0.0f, 15.0f, 0.0f));
+        boxNode2->GetComponent<StaticModel>()->SetMaterial(materialYellow);
+    }
+
     if (1)
     {
         const float HALFX = 4.0f;
@@ -284,7 +341,7 @@ void SampleRVGI::MaterialAddGridFillPass(Material* material, const String& defin
         customPass->SetVertexShader("GridFill");
         customPass->SetPixelShader("GridFill");
         customPass->SetGeometryShader("GridFill");
-        customPass->SetPixelShaderDefines(gridDefines);
+        customPass->SetPixelShaderDefines(technique->GetPass("base")->GetPixelShaderDefines() + gridDefines);
 
         customPass->SetCullMode(CULL_NONE); // Default: CULL_CCW
         customPass->SetDepthTestMode(CMP_DISABLED);

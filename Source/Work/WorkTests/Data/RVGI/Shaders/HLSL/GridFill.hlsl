@@ -248,7 +248,7 @@ void PS(PS_Input input)
     // --- Voxel Color ---
 
     // Get surface color
-#if TERRAIN
+#if defined(TERRAIN)
     float3 weights = Sample2D(WeightMap0, input.texCoord.xy).rgb;
     float sumWeights = weights.r + weights.g + weights.b;
     weights /= sumWeights;
@@ -257,8 +257,10 @@ void PS(PS_Input input)
         weights.g * Sample2D(DetailMap2, input.texCoord.xy) +
         weights.b * Sample2D(DetailMap3, input.texCoord.xy)
     );
+#elif defined(DIFFMAP)
+    float4 diffColor = cMatDiffColor * Sample2D(DiffMap, input.texCoord.xy);
 #else
-    float4 diffColor = Sample2D(DiffMap, input.texCoord.xy);
+    float4 diffColor = cMatDiffColor;
 #endif
     float3 base = diffColor.rgb;
 
