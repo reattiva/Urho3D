@@ -18,7 +18,15 @@
 
     <command type="clear" enabled="1" color="fog" depth="1.0" stencil="0" />
 
-    <command type="clear" enable="0" color="0 0 0 0" output="albedo" />
+    <command type="clear" enabled="0" color="0 0 0 0" output="albedo" />
+
+    <command type="clear" enabled="1" color="0 0 0 0" depthstencil="none" output="array0" />
+    <command type="clear" enabled="1" color="0 0 0 0" depthstencil="none" output="array1" />
+    <command type="clear" enabled="1" color="0 0 0 0" depthstencil="none" output="array2" />
+
+    <command type="clear" enabled="0" color="0 0 0 0" depthstencil="none" output="array3" />
+    <command type="clear" enabled="0" color="0 0 0 0" depthstencil="none" output="array4" />
+    <command type="clear" enabled="0" color="0 0 0 0" depthstencil="none" output="array5" />
 
     <!-- Clear the voxel grid -->
     <command type="compute" enabled="1" cs="GridClear" unbind=";;4" /> 

@@ -245,7 +245,7 @@ PS_Output PS(GS_Output input)
 	// Get voxel data
     Voxel voxel = BufferGrid[gridIndex];
 
-#if 0
+#if 1
     // Early out if voxel has no geometry info
     if ((voxel.colorOcclusionMask & (1<<31u)) == 0)
         discard;
